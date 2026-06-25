@@ -1,0 +1,50 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+  "name": "io.github.http-danny/knowledge-graph",
+  "description": "Read-only hybrid GraphRAG + code-intelligence over your local corpus (safe tool profile).",
+  "version": "0.4.0",
+  "repository": {
+    "url": "https://github.com/http-danny/knowledge-graph",
+    "source": "github"
+  },
+  "packages": [
+    {
+      "registryType": "npm",
+      "registryBaseUrl": "https://npm.pkg.github.com",
+      "identifier": "@http-danny/knowledge-graph",
+      "version": "0.4.0",
+      "runtimeHint": "npx",
+      "transport": {
+        "type": "stdio"
+      },
+      "environmentVariables": [
+        {
+          "name": "KG_CONFIG_PATH",
+          "description": "Absolute path to kg.config.json.",
+          "isRequired": false,
+          "isSecret": false,
+          "format": "filepath"
+        },
+        {
+          "name": "KG_TOOL_PROFILE",
+          "description": "MCP tool profile. 'safe' hides raw-Cypher tools.",
+          "isRequired": false,
+          "isSecret": false,
+          "format": "string",
+          "default": "safe",
+          "choices": [
+            "safe",
+            "full"
+          ]
+        }
+      ]
+    }
+  ],
+  "_meta": {
+    "io.modelcontextprotocol.registry/publisher-provided": {
+      "io.github.http-danny.knowledge-graph": {
+        "expectedSubstrateSchemaVersion": 20
+      }
+    }
+  }
+}

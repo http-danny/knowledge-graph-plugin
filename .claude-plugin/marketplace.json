@@ -1,0 +1,14 @@
+{
+  "name": "knowledge-graph-marketplace",
+  "description": "Knowledge Graph plugin marketplace",
+  "owner": {
+    "name": "http-danny"
+  },
+  "plugins": [
+    {
+      "name": "knowledge-graph",
+      "source": "./plugin",
+      "description": "Hybrid GraphRAG over your local markdown corpus for Claude Code (local-only stack)"
+    }
+  ]
+}

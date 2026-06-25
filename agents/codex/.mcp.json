@@ -1,0 +1,17 @@
+{
+  "mcpServers": {
+    "kg": {
+      "command": "node",
+      "args": [
+        "bin/kg-hybrid-mcp.js"
+      ],
+      "cwd": "./",
+      "env": {
+        "KG_TOOL_PROFILE": "safe"
+      },
+      "env_vars": [
+        "KG_CONFIG_PATH"
+      ]
+    }
+  }
+}

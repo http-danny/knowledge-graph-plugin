@@ -1,0 +1,7 @@
+upstream: https://github.com/neo4j-contrib/neo4j-skills
+path: neo4j-modeling-skill
+commit: 5c2d74082f2a5f0500bc13e74526f9d27bb80ed8
+date: 2026-04-30 18:27:38 +0200
+vendored-by: knowledge-graph (Daniel Jackson)
+vendored-date: 2026-05-03
+license: MIT (see ../LICENSE-neo4j-contrib-neo4j-skills)

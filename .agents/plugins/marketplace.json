@@ -1,0 +1,9 @@
+{
+  "name": "knowledge-graph-marketplace",
+  "plugins": [
+    {
+      "name": "knowledge-graph",
+      "source": "./agents/codex"
+    }
+  ]
+}

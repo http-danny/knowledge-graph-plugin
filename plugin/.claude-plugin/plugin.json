@@ -1,0 +1,32 @@
+{
+  "name": "knowledge-graph",
+  "description": "Hybrid GraphRAG over your local markdown corpus for Claude Code (local-only stack)",
+  "author": {
+    "name": "http-danny"
+  },
+  "license": "MIT",
+  "hooks": "./hooks/hooks.json",
+  "mcpServers": {
+    "neo4j-cypher": {
+      "command": "uvx",
+      "args": ["mcp-neo4j-cypher", "--read-only"],
+      "env": {
+        "NEO4J_URI": "${KG_NEO4J_URI:-bolt://localhost:7687}",
+        "NEO4J_USERNAME": "${KG_NEO4J_USERNAME:-neo4j}",
+        "NEO4J_PASSWORD": "${KG_NEO4J_PASSWORD:-knowledge-graph}",
+        "NEO4J_DATABASE": "${KG_NEO4J_DATABASE:-neo4j}"
+      }
+    },
+    "kg": {
+      "command": "node",
+      "args": ["${CLAUDE_PLUGIN_ROOT}/bin/kg-hybrid-mcp.js"],
+      "env": {
+        "KG_NEO4J_URI": "${KG_NEO4J_URI:-bolt://localhost:7687}",
+        "KG_NEO4J_USERNAME": "${KG_NEO4J_USERNAME:-neo4j}",
+        "KG_NEO4J_PASSWORD": "${KG_NEO4J_PASSWORD:-knowledge-graph}",
+        "KG_NEO4J_DATABASE": "${KG_NEO4J_DATABASE:-neo4j}",
+        "KG_QDRANT_URL": "${KG_QDRANT_URL:-http://localhost:6333}"
+      }
+    }
+  }
+}
