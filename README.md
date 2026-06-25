@@ -16,6 +16,55 @@ The read-only `kg` MCP server exposes tools (`kg_search`, `kg_code_semantic_sear
 `kg_impact`, and more) over a local Neo4j + Qdrant substrate built from your corpus.
 Read-only by design; nothing here egresses.
 
+## How it fits together
+
+This plugin ships exactly one thing: the read-only **`kg` MCP server**. There are
+**no slash commands and no skills**, so the `/knowledge-graph:` slash menu is empty —
+that's expected. The value is the `kg` **tools**, which Claude calls for you (look
+under `/mcp`), and they return results only once the **write side**
+(`@http-danny/kg-cli`) has ingested your corpus into a local Neo4j + Qdrant: no
+ingest, no results.
+
+```mermaid
+flowchart TB
+    subgraph YOURSIDE["YOUR DATA"]
+        corpus["Local corpus<br/>markdown · code · (opt) connectors"]
+    end
+
+    subgraph WRITE["WRITE side — kg CLI  (separate pkg: @http-danny/kg-cli)"]
+        cli["kg provision / kg ingest<br/>builds the substrate"]
+    end
+
+    subgraph STORES["Local stores (Docker, no cloud)"]
+        neo[("Neo4j<br/>property graph")]
+        qdr[("Qdrant<br/>vectors")]
+    end
+
+    subgraph PLUGIN["knowledge-graph PLUGIN  (what you installed — one server)"]
+        kgmcp["kg MCP server — READ-only TOOLS<br/>kg_search · kg_code_semantic_search<br/>kg_impact · kg_context_search<br/>kg_decision_trace · kg_describe_schema …"]
+        hooks["hooks: SessionStart / End / PreCompact<br/>→ kg triggers (auto-ingest)"]
+    end
+
+    claude(["Claude Code"])
+
+    corpus --> cli --> neo
+    cli --> qdr
+    neo --> kgmcp
+    qdr --> kgmcp
+    kgmcp -->|"tools Claude calls (via /mcp, not the / menu)"| claude
+    hooks -.->|"keeps graph fresh"| cli
+
+    classDef product fill:#d6e4ff,stroke:#1565c0,color:#000
+    class kgmcp,hooks product
+```
+
+The left half (CLI → Neo4j/Qdrant) is the prerequisite — no ingest, no results.
+
+**Power users:** want hand-written Cypher? Run the CLI with `--profile full` for the
+`kg_run_cypher` tool, or add the official `mcp-neo4j-cypher` server yourself. Want the
+Neo4j helper skills? Install [`neo4j-contrib/neo4j-skills`](https://github.com/neo4j-contrib/neo4j-skills)
+separately — they apply to any Neo4j graph, including this one.
+
 ## Prerequisites
 
 These tools **read** a substrate that the `kg` CLI **builds**. Before they return results:
@@ -64,5 +113,4 @@ pin a release — reference a tag from your marketplace entry to stay fixed.
 
 ## License
 
-MIT — see [LICENSE](LICENSE) and [NOTICE.md](NOTICE.md). Bundled Neo4j skills retain
-their own license under `plugin/skills/`.
+MIT — see [LICENSE](LICENSE) and [NOTICE.md](NOTICE.md).
