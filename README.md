@@ -71,8 +71,8 @@ These tools **read** a substrate that the `kg` CLI **builds**. Before they retur
 
 1. Build and ingest a corpus with the `kg` CLI — see the
    [main repo quickstart](https://github.com/http-danny/knowledge-graph#quickstart).
-2. Default connection env (overridable): `KG_NEO4J_URI=bolt://localhost:7687`,
-   `KG_QDRANT_URL=http://localhost:6333`.
+2. Default connection env (overridable): `KG_NEO4J_URI=bolt://127.0.0.1:7687`,
+   `KG_QDRANT_URL=http://127.0.0.1:6333`.
 
 ## Install
 
