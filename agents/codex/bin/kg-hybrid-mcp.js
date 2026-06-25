@@ -85657,8 +85657,10 @@ var GraphSchema = external_exports.discriminatedUnion("provider", [Neo4jGraphSch
 var DiscoverySchema = external_exports.object({
   globs: external_exports.array(external_exports.string().min(1)),
   // empty array is allowed at the schema level; loadConfig will error
-  excludeDirs: external_exports.array(external_exports.string().min(1)).default([])
+  excludeDirs: external_exports.array(external_exports.string().min(1)).default([]),
   // merged with defaults at load time
+  // NEW (spec §4.A4): first-ingest count-gate threshold. Used by the ingest guard (Task A6).
+  confirmThreshold: external_exports.number().int().min(1).optional()
 });
 var StateSchema = external_exports.object({
   dir: external_exports.string().min(1)
@@ -86249,7 +86251,9 @@ var CorpusIdSchema = external_exports.string().regex(CORPUS_ID_PATTERN, `corpus.
 );
 var CorpusConfigSchema = external_exports.object({
   id: CorpusIdSchema,
-  name: external_exports.string().min(1).optional()
+  name: external_exports.string().min(1).optional(),
+  // NEW (spec §3): explicit, user-editable corpus root. Absent ⇒ dirname(configPath).
+  rootPath: external_exports.string().min(1).optional()
 }).strict();
 var UserConfigSchema = external_exports.object({
   enabled: external_exports.boolean().default(false),
@@ -86621,8 +86625,11 @@ function loadConfig(opts = {}) {
     );
   }
   const resolved = resolveSecrets(withDefaults, env);
-  const rootPath = dirname2(configPath);
+  const configDir = dirname2(configPath);
   const corpusBlock = withDefaults.corpus;
+  const explicitRoot = corpusBlock?.rootPath;
+  const expandedRoot = explicitRoot ? expandEnvAndHome(explicitRoot, { env }) : void 0;
+  const rootPath = expandedRoot ? isAbsolute(expandedRoot) ? expandedRoot : resolve(configDir, expandedRoot) : configDir;
   resolved.corpus = corpusBlock ? { id: corpusBlock.id, ...corpusBlock.name !== void 0 ? { name: corpusBlock.name } : {}, rootPath } : { id: "default", rootPath };
   resolved.corpusWasExplicit = corpusBlock !== void 0;
   resolved.configPath = configPath;
@@ -87027,6 +87034,7 @@ function statePaths(cfg) {
     supervisionLock: join3(corpusDir, ".supervision.lock"),
     supervisionDirty: join3(corpusDir, ".supervision.dirty"),
     supervisionLog: join3(corpusDir, ".supervision-watch.log"),
+    ingestGuard: join3(corpusDir, ".ingest-guard.json"),
     backups: join3(root, "backups")
   };
 }
