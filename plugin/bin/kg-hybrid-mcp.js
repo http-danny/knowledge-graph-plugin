@@ -90014,7 +90014,7 @@ var TOOLS = [
   },
   {
     name: "kg_session_activity",
-    description: "For one agent session (by stable id), return its ToolCall timeline (ordered by time), its participating actors, and any S1 Decisions that reference the session. Read-only and corpus-scoped.",
+    description: "For one agent session (by stable id), return its ToolCall timeline (ordered by time), its participating actors, and any decisions that reference the session. Read-only and corpus-scoped.",
     inputShape: kgSessionActivityInputShape,
     handler: handleKgSessionActivity,
     profile: "safe"
@@ -90261,7 +90261,7 @@ var TOOLS2 = [
   },
   {
     name: "kg_data_search",
-    description: "Semantic search over ingested SQL data rows (:DbEntity) in the dedicated `data` collection. Returns matching rows with their table/pk/connection provenance and properties. Corpus-scoped and read-only. When SQL data embedding is off (embedding:`none`) it returns an empty result \u2014 query rows structurally via kg_sql_catalog instead.",
+    description: "Semantic search over ingested SQL data rows. Returns matching rows with their table/pk/connection provenance and properties. Corpus-scoped and read-only. When SQL data embedding is off (embedding:`none`) it returns an empty result \u2014 query rows structurally via kg_sql_catalog instead.",
     inputShape: kgDataSearchInputShape,
     handler: handleKgDataSearch,
     profile: "safe"
@@ -90752,7 +90752,7 @@ var TOOLS3 = [
   },
   {
     name: "kg_work_item_search",
-    description: "Semantic search over ingested work items (find issues by meaning) in the dedicated `worktracker` collection. Returns matching items with their key/title/status/project. Corpus-scoped and read-only. When work-tracker embedding is off (embedding:`none`) it returns an empty result \u2014 list/filter items structurally via kg_work_items instead.",
+    description: "Semantic search over ingested work items (find issues by meaning). Returns matching items with their key/title/status/project. Corpus-scoped and read-only. When work-tracker embedding is off (embedding:`none`) it returns an empty result \u2014 list/filter items structurally via kg_work_items instead.",
     inputShape: kgWorkItemSearchInputShape,
     handler: handleKgWorkItemSearch,
     profile: "safe"
@@ -91267,7 +91267,7 @@ var TOOLS4 = [
   },
   {
     name: "kg_vcs_search",
-    description: "Semantic search over ingested pull requests and reviews (find by meaning) in the dedicated `vcs` collection. Returns matching items with their title/state/repo. Corpus-scoped and read-only. When vcs embedding is off (embedding:`none`) it returns an empty result \u2014 list/filter PRs structurally via kg_pull_requests instead.",
+    description: "Semantic search over ingested pull requests and reviews (find by meaning). Returns matching items with their title/state/repo. Corpus-scoped and read-only. When vcs embedding is off (embedding:`none`) it returns an empty result \u2014 list/filter PRs structurally via kg_pull_requests instead.",
     inputShape: kgVcsSearchInputShape,
     handler: handleKgVcsSearch,
     profile: "safe"
@@ -91892,7 +91892,7 @@ var TOOLS5 = [
   },
   {
     name: "kg_cicd_search",
-    description: "Semantic search over ingested incidents (find by meaning) in the dedicated `cicd` collection. Returns matching items with their title/status. Corpus-scoped and read-only. When ci-cd embedding is off (embedding:`none`, the default) it returns an empty result \u2014 list/filter incidents structurally via kg_incidents instead.",
+    description: "Semantic search over ingested incidents (find by meaning). Returns matching items with their title/status. Corpus-scoped and read-only. When ci-cd embedding is off (embedding:`none`, the default) it returns an empty result \u2014 list/filter incidents structurally via kg_incidents instead.",
     inputShape: kgCicdSearchInputShape,
     handler: handleKgCicdSearch,
     profile: "safe"
@@ -92354,7 +92354,7 @@ var TOOLS6 = [
   },
   {
     name: "kg_chat_search",
-    description: "Semantic search over ingested chat messages (find by meaning) in the dedicated `chat` collection, optionally restricted to one system (teams/google-chat). Returns matching messages with their thread, system, text, and occurred time. Corpus-scoped and read-only. When chat embedding is off (embedding:`none`, the default) it returns an empty result \u2014 list/filter threads structurally via kg_chat_threads instead.",
+    description: "Semantic search over ingested chat messages (find by meaning), optionally restricted to one system (teams/google-chat). Returns matching messages with their thread, system, text, and occurred time. Corpus-scoped and read-only. When chat embedding is off (embedding:`none`, the default) it returns an empty result \u2014 list/filter threads structurally via kg_chat_threads instead.",
     inputShape: kgChatSearchInputShape,
     handler: handleKgChatSearch,
     profile: "safe"
@@ -92854,7 +92854,7 @@ function extractStatus10(err) {
 var TOOLS7 = [
   {
     name: "kg_meeting_search",
-    description: "Semantic search over ingested meetings and action items (find by meaning) in the dedicated `meetings` collection, optionally restricted to one system (zoom/google-calendar). Returns matching meetings/action items with their owning meeting, system, title/text, and occurred time. Corpus-scoped and read-only. When meeting embedding is off (embedding:`none`, the default) it returns an empty result \u2014 list/filter meetings structurally via kg_meeting_activity / kg_action_items instead.",
+    description: "Semantic search over ingested meetings and action items (find by meaning), optionally restricted to one system (zoom/google-calendar). Returns matching meetings/action items with their owning meeting, system, title/text, and occurred time. Corpus-scoped and read-only. When meeting embedding is off (embedding:`none`, the default) it returns an empty result \u2014 list/filter meetings structurally via kg_meeting_activity / kg_action_items instead.",
     inputShape: kgMeetingSearchInputShape,
     handler: handleKgMeetingSearch,
     profile: "safe"
@@ -93359,7 +93359,7 @@ var TOOLS8 = [
   },
   {
     name: "kg_email_search",
-    description: "Semantic search over ingested email messages (find by meaning) in the dedicated `email` collection, optionally restricted to one system (gmail/outlook). Returns matching messages with their thread, system, text, and occurred time. Corpus-scoped and read-only. When email embedding is off (embedding:`none`, the default) it returns an empty result \u2014 list/filter threads structurally via kg_email_threads instead.",
+    description: "Semantic search over ingested email messages (find by meaning), optionally restricted to one system (gmail/outlook). Returns matching messages with their thread, system, text, and occurred time. Corpus-scoped and read-only. When email embedding is off (embedding:`none`, the default) it returns an empty result \u2014 list/filter threads structurally via kg_email_threads instead.",
     inputShape: kgEmailSearchInputShape,
     handler: handleKgEmailSearch,
     profile: "safe"
@@ -93884,7 +93884,7 @@ var TOOLS9 = [
   },
   {
     name: "kg_docs_search",
-    description: "Semantic search over ingested wiki pages (find by meaning) in the dedicated `docs` collection, optionally restricted to one space or label. Returns matching pages with their title, space, url, and snippet. Corpus-scoped and read-only. When docs embedding is off (embedding:`none`, the default) it returns an empty result \u2014 list/filter pages structurally via kg_docs instead.",
+    description: "Semantic search over ingested wiki pages (find by meaning), optionally restricted to one space or label. Returns matching pages with their title, space, url, and snippet. Corpus-scoped and read-only. When docs embedding is off (embedding:`none`, the default) it returns an empty result \u2014 list/filter pages structurally via kg_docs instead.",
     inputShape: kgDocsSearchInputShape,
     handler: handleKgDocsSearch,
     profile: "safe"
@@ -94476,7 +94476,7 @@ var TOOLS10 = [
   },
   {
     name: "kg_design_search",
-    description: "Semantic search over ingested design files & mockups (find by meaning) in the dedicated `design` collection, optionally restricted to one file, kind, or project. Returns matching nodes with their file key, name, url, and snippet. Corpus-scoped and read-only. When design embedding is off (embedding:`none`, the default) it returns an empty result \u2014 list/filter design nodes structurally via kg_design instead.",
+    description: "Semantic search over ingested design files & mockups (find by meaning), optionally restricted to one file, kind, or project. Returns matching nodes with their file key, name, url, and snippet. Corpus-scoped and read-only. When design embedding is off (embedding:`none`, the default) it returns an empty result \u2014 list/filter design nodes structurally via kg_design instead.",
     inputShape: kgDesignSearchInputShape,
     handler: handleKgDesignSearch,
     profile: "safe"
@@ -94629,7 +94629,7 @@ async function main() {
   server.registerTool(
     "kg_search",
     {
-      description: "Hybrid GraphRAG search over the personal knowledge graph (Voyage embeddings + Qdrant vectors + Neo4j hydrate + re-rank). Scope filters: domain, project, nodeTypes. Corpus scoping: when corpus isolation is active, results default to this server's own corpus; pass scope.corpus='all' to widen across all corpora; pass scope.corpus='<id>' to target a specific corpus (errors if unknown or scoping is inactive). While scoping is inactive, results are unscoped. Date-range filtering (since/until) is deferred to Phase F until the embedding payload carries `dateIso`.",
+      description: "Hybrid search (vector + graph, with re-ranking) over the knowledge graph's prose and code \u2014 the primary tool for answering a question from the corpus. Scope filters: domain, project, nodeTypes. Corpus scoping: results default to this corpus when isolation is active; pass scope.corpus='all' to search every corpus, or scope.corpus='<id>' to target one (errors if unknown or scoping is inactive); while scoping is inactive, results are unscoped. Corpus-scoped and read-only.",
       inputSchema: kgSearchInputShape
     },
     wrap2("kg_search", handleKgSearch)
@@ -94637,7 +94637,7 @@ async function main() {
   server.registerTool(
     "kg_describe_schema",
     {
-      description: "Describe the graph schema: labels, relationship types, and top label counts. Cached 5 minutes; invalidates on :Meta schemaVersion bump.",
+      description: "Describe the graph schema: labels, relationship types, and top label counts. Inspect this to learn the available labels and relationships before composing a structural query. Read-only.",
       inputSchema: kgDescribeSchemaInputShape
     },
     wrap2("kg_describe_schema", handleKgDescribeSchema)
@@ -94645,7 +94645,7 @@ async function main() {
   server.registerTool(
     "kg_node_neighborhood",
     {
-      description: "Return all nodes/edges within `depth` hops of a given start node. Use n.id or n.path as the natural key.",
+      description: "Expand a graph node's immediate relationships: every node and edge within `depth` hops of a start node (keyed by n.id or n.path). Read-only.",
       inputSchema: kgNodeNeighborhoodInputShape
     },
     wrap2("kg_node_neighborhood", handleKgNodeNeighborhood)
@@ -94654,7 +94654,7 @@ async function main() {
     server.registerTool(
       "kg_run_cypher",
       {
-        description: "Run a read-only Cypher query. Write keywords (CREATE/MERGE/DELETE/SET/REMOVE/DROP/LOAD/DETACH) are blocked at the source level AND the driver enforces read-only via runReadTx. Use the ETL pipeline for writes.",
+        description: "Run a read-only Cypher query against the graph. Writes (CREATE/MERGE/DELETE/SET/REMOVE/DROP/LOAD/DETACH) are rejected by both keyword screening and a read-only transaction; use the ingestion pipeline to change data. Read-only.",
         inputSchema: kgRunCypherInputShape
       },
       wrap2("kg_run_cypher", handleKgRunCypher)
@@ -94664,7 +94664,7 @@ async function main() {
     server.registerTool(
       "kg_estimate_query_size",
       {
-        description: "Run Cypher EXPLAIN and return a structured plan tree with estimated rows. Does NOT execute the query.",
+        description: "Estimate a Cypher query's cost: returns the EXPLAIN plan tree with estimated row counts without executing the query. Read-only.",
         inputSchema: kgEstimateQuerySizeInputShape
       },
       wrap2("kg_estimate_query_size", handleKgEstimateQuerySize)
@@ -94673,7 +94673,7 @@ async function main() {
   server.registerTool(
     "kg_code_search",
     {
-      description: "Fulltext search over code symbols (functions, classes, methods, interfaces) indexed in the knowledge graph. Uses the 'code_symbols' Neo4j fulltext index populated by the code-ingestion pipeline. Filters: kinds (symbol type), repos (repoIds), languages. Corpus scoping: when corpus isolation is active, results default to this server's own corpus; pass corpus='all' to widen across all corpora; pass corpus='<id>' to target a specific corpus (errors if unknown or scoping is inactive). While scoping is inactive, results are unscoped. Results ordered by fulltext relevance score.",
+      description: "Keyword (fulltext) search over code symbols \u2014 functions, classes, methods, interfaces \u2014 ranked by relevance. Filters: kinds, repos, languages. Use kg_code_semantic_search to search by meaning instead of exact terms. Corpus scoping: results default to this corpus when isolation is active; pass corpus='all' to widen across all corpora, or corpus='<id>' to target one (errors if unknown or scoping is inactive); while scoping is inactive, results are unscoped. Corpus-scoped and read-only.",
       inputSchema: kgCodeSearchInputShape
     },
     wrap2("kg_code_search", handleKgCodeSearch)
@@ -94681,7 +94681,7 @@ async function main() {
   server.registerTool(
     "kg_callers",
     {
-      description: "Return all symbols that call a given code symbol, traversing up to `depth` hops of the call graph. Depth is capped at 3. Results are ordered by hop count ascending and capped at 200.",
+      description: "Find every symbol that calls a given code symbol, walking up to `depth` hops of the call graph (depth capped at 3). Ordered by hop count ascending, capped at 200. Corpus-scoped and read-only.",
       inputSchema: kgCallersInputShape
     },
     wrap2("kg_callers", handleKgCallers)
@@ -94689,7 +94689,7 @@ async function main() {
   server.registerTool(
     "kg_callees",
     {
-      description: "Return all symbols called by a given code symbol, traversing up to `depth` hops of the call graph. Depth is capped at 3. Results are ordered by hop count ascending and capped at 200.",
+      description: "Find every symbol called by a given code symbol, walking up to `depth` hops of the call graph (depth capped at 3). Ordered by hop count ascending, capped at 200. Corpus-scoped and read-only.",
       inputSchema: kgCalleesInputShape
     },
     wrap2("kg_callees", handleKgCallees)
@@ -94697,7 +94697,7 @@ async function main() {
   server.registerTool(
     "kg_code_node",
     {
-      description: "Return a full view of a single code symbol node: file, repo, outgoing calls, incoming callers, and prose document references. Input: stable symbolId.",
+      description: "Return a full view of one code symbol: its file, repo, outgoing calls, incoming callers, and the prose documents that reference it. Input: stable symbolId. Corpus-scoped and read-only.",
       inputSchema: kgCodeNodeInputShape
     },
     wrap2("kg_code_node", handleKgCodeNode)
@@ -94705,7 +94705,7 @@ async function main() {
   server.registerTool(
     "kg_prose_refs_to_code",
     {
-      description: "Find all prose Document nodes (markdown, ADRs, notes) that reference a given code symbol via [:REFERENCES] edges. Useful for locating documentation that mentions a specific function, class, method, or interface.",
+      description: "Find the prose documents (markdown, ADRs, notes) that reference a given code symbol \u2014 locate the documentation that mentions a specific function, class, method, or interface. Corpus-scoped and read-only.",
       inputSchema: kgProseRefsToCodeInputShape
     },
     wrap2("kg_prose_refs_to_code", handleKgProseRefsToCode)
@@ -94713,7 +94713,7 @@ async function main() {
   server.registerTool(
     "kg_code_semantic_search",
     {
-      description: "Semantic similarity search over code symbols (LLM-summarized + embedded into the code_chunks vector collection). Returns ranked symbols. Scope filters: repos, languages, kinds (function/class/method/interface). Corpus scoping: when corpus isolation is active, results default to this server's own corpus; pass corpus='all' to widen across all corpora; pass corpus='<id>' to target a specific corpus (errors if unknown or scoping is inactive). While scoping is inactive, results are unscoped.",
+      description: "Semantic (meaning-based) search over code symbols \u2014 describe what the code does in natural language and get back the most relevant symbols. Filters: repos, languages, kinds (function/class/method/interface). Corpus scoping: results default to this corpus when isolation is active; pass corpus='all' to widen across all corpora, or corpus='<id>' to target one (errors if unknown or scoping is inactive); while scoping is inactive, results are unscoped. Corpus-scoped and read-only.",
       inputSchema: kgCodeSemanticSearchInputShape
     },
     wrap2("kg_code_semantic_search", handleKgCodeSemanticSearch)
@@ -94721,7 +94721,7 @@ async function main() {
   server.registerTool(
     "kg_code_neighbors",
     {
-      description: "Find code symbols semantically similar to a given symbol. Re-embeds the symbol's stored summary, searches the code_chunks collection, and returns the nearest OTHER symbols (excludes the source). Input: stable symbolId.",
+      description: "Find the code symbols most semantically similar to a given symbol (excludes the symbol itself). Input: stable symbolId. Corpus-scoped and read-only.",
       inputSchema: kgCodeNeighborsInputShape
     },
     wrap2("kg_code_neighbors", handleKgCodeNeighbors)
@@ -94729,7 +94729,7 @@ async function main() {
   server.registerTool(
     "kg_code_tour",
     {
-      description: "Return a guided code tour by id (ordered steps with resolved DESCRIBES targets: symbols by qualifiedName, files by path). Omit tourId to list all available tours. List mode enumerates tours across all corpora (deliberately unscoped in v1).",
+      description: "Replay a guided code tour by id \u2014 ordered steps with their resolved targets (symbols by qualifiedName, files by path). Omit tourId to list every available tour (the list spans all corpora). Read-only.",
       inputSchema: kgCodeTourInputShape
     },
     wrap2("kg_code_tour", handleKgCodeTour)
@@ -94737,7 +94737,7 @@ async function main() {
   server.registerTool(
     "kg_impact",
     {
-      description: "Compute the blast radius for a code symbol or file: transitive callers (CALLS*1..depth), routes that reach those callers (Route-[:HANDLED_BY]->...<-[:CALLS*0..depth]-), and documents that reference any node in the closure. Depth capped at 6, results capped at 500. Provide exactly one of symbolId or path.",
+      description: "Compute the blast radius of a change to a code symbol or file: its transitive callers, the routes that reach them, and the documents that reference anything in that closure. Provide exactly one of symbolId or path. Depth capped at 6, results capped at 500. Corpus-scoped and read-only.",
       inputSchema: kgImpactInputShape
     },
     wrap2("kg_impact", handleKgImpact)
@@ -94745,7 +94745,7 @@ async function main() {
   server.registerTool(
     "kg_code_source",
     {
-      description: "Return a single code symbol's source code, read from disk and sliced to the symbol's line range (1-based, inclusive). Files are the source of truth. Returns { source, lineStart, lineEnd, language, path, summary, available }; `source` is null with a `reason` ('no-line-range' | 'file-unreadable' | 'path-escaped') when the slice can't be produced. Input: stable symbolId.",
+      description: "Return a single code symbol's source code, read from disk and sliced to the symbol's line range (1-based, inclusive). Files are the source of truth. Returns { source, lineStart, lineEnd, language, path, summary, available }; `source` is null with a `reason` ('no-line-range' | 'file-unreadable' | 'path-escaped') when the slice can't be produced. Input: stable symbolId. Corpus-scoped and read-only.",
       inputSchema: kgCodeSourceInputShape
     },
     wrap2("kg_code_source", handleKgCodeSource)
@@ -94753,7 +94753,7 @@ async function main() {
   server.registerTool(
     "kg_sql_lineage",
     {
-      description: "Walk the SQL lineage neighborhood of a SQL Code symbol (the primary SQL query tool \u2014 SQL is queried structurally, not via vector search). Given exactly one of symbolId (exact) or qualifiedName (fuzzy CONTAINS, case-insensitive, e.g. 'public.refresh_totals' or 'orders'), resolves the seed node(s) and returns downstream lineage (seed-[:EXECUTES|QUERIES|WRITES|SELECTS_FROM]->target), upstream lineage (caller->seed), and data-structure context (HAS_COLUMN/FOREIGN_KEY/HAS_TRIGGER/OF_TYPE/IN_SCHEMA around reached tables). Each lineage edge is tagged resolved/ambiguous/confidence. Depth capped at 6, results capped at 500. Read-only.",
+      description: "Walk the SQL lineage neighborhood of a SQL symbol \u2014 SQL is queried structurally here, not by semantic search. Give exactly one of symbolId (exact) or qualifiedName (fuzzy, case-insensitive, e.g. 'public.refresh_totals' or 'orders'); returns downstream lineage (what the symbol executes, queries, writes, and selects from), upstream lineage (its callers), and surrounding data-structure context (columns, foreign keys, triggers, types, schema) for the tables it reaches. Each edge is tagged resolved/ambiguous with a confidence. Depth capped at 6, results capped at 500. Corpus-scoped and read-only.",
       inputSchema: kgSqlLineageInputShape
     },
     wrap2("kg_sql_lineage", handleKgSqlLineage)
@@ -94762,7 +94762,7 @@ async function main() {
     "kg_decision_trace",
     {
       title: "Trace a decision",
-      description: "Trace a decision's causal chain: its rationales, decision-context, decider, subjects, provenance, and CAUSED/LED_TO/INFLUENCED/SUPERSEDES/RESULTED_IN neighborhood.",
+      description: "Trace a decision's causal chain: its rationales, context, decider, and subjects, plus the decisions and outcomes it caused, led to, influenced, superseded, or resulted in. Corpus-scoped and read-only.",
       inputSchema: kgDecisionTraceInputShape
     },
     wrap2("kg_decision_trace", handleKgDecisionTrace)
@@ -94771,7 +94771,7 @@ async function main() {
     "kg_context_search",
     {
       title: "Search the Context layer",
-      description: "Semantic search over the Context layer (decisions, rationales, context events).",
+      description: "Semantic search over the Context layer \u2014 decisions, rationales, and context events. Corpus-scoped and read-only.",
       inputSchema: kgContextSearchInputShape
     },
     wrap2("kg_context_search", handleKgContextSearch)
@@ -94780,7 +94780,7 @@ async function main() {
     "kg_find_precedents",
     {
       title: "Find decision precedents",
-      description: "Find prior decisions similar to a described situation ('have we decided something like this before?').",
+      description: "Find prior decisions similar to a described situation \u2014 'have we decided something like this before?'. Corpus-scoped and read-only.",
       inputSchema: kgFindPrecedentsInputShape
     },
     wrap2("kg_find_precedents", handleKgFindPrecedents)
@@ -94789,7 +94789,7 @@ async function main() {
     "kg_outcomes",
     {
       title: "Query wins and outcomes",
-      description: "Read-only search over realized outcomes (wins) and their decision\u2192production evidence trace. Semantic (query) or structural; filter by showcaseOnly/sentiment/since/until; own-corpus default.",
+      description: "Search realized outcomes (wins) and each win's decision\u2192production evidence trace. Semantic (query) or structural; filter by showcaseOnly/sentiment/since/until. Corpus-scoped and read-only.",
       inputSchema: kgOutcomesInputShape
     },
     wrap2("kg_outcomes", handleKgOutcomes)

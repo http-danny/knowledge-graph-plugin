@@ -20,9 +20,9 @@ they return structured, provenance-linked retrieval instead of raw text scans.
 | `kg_code_tour` | List or replay a guided tour of a feature/subsystem. |
 | `kg_impact` | What a change to a symbol would affect (blast radius). |
 | `kg_code_source` | Read a symbol's exact source slice from disk. |
-| `kg_sql_lineage` | Walk the SQL lineage neighborhood (EXECUTES/QUERIES/WRITES/SELECTS_FROM + data-structure edges) of a SQL symbol. |
+| `kg_sql_lineage` | Walk a SQL symbol's lineage neighborhood — what it executes, queries, writes, and selects from, plus surrounding data-structure context. |
 | `kg_context_search` | Semantic search over the Context layer (decisions, rationales, context events). |
-| `kg_decision_trace` | Trace a decision's causal chain (rationales, decision-context, decider, subjects, provenance + CAUSED/LED_TO/INFLUENCED/SUPERSEDES/RESULTED_IN neighborhood). |
+| `kg_decision_trace` | Trace a decision's causal chain — its rationales, context, decider, and subjects, plus the decisions and outcomes it caused, led to, influenced, superseded, or resulted in. |
 | `kg_find_precedents` | Find prior decisions similar to a situation ("have we decided something like this before?"). |
 | `kg_outcomes` | Search realized outcomes (wins) + each win's decision→production evidence trace. |
 | `kg_user_context` | Read the operator's own User layer — their profile (who they are), preferences (how they want the agent to work), and saved queries — for the active corpus. Semantic or structural; filter by types/preferenceKinds. Local-only, never egresses. |
