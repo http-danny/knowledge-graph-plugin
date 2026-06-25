@@ -1,12 +1,21 @@
 {
   "name": "@http-danny/knowledge-graph",
-  "version": "0.4.0",
+  "version": "0.4.1",
   "private": true,
   "type": "module",
   "description": "Self-contained read-only kg MCP server bundle (hybrid GraphRAG + code intelligence). 'type:module' makes Node treat the ESM bundle correctly; pnpm-workspace resolves it.",
-  "bin": { "kg-mcp": "./bin/kg-hybrid-mcp.js" },
-  "files": ["bin"],
+  "bin": {
+    "kg-mcp": "./bin/kg-hybrid-mcp.js"
+  },
+  "files": [
+    "bin"
+  ],
   "mcpName": "io.github.http-danny/knowledge-graph",
-  "repository": { "type": "git", "url": "git+https://github.com/http-danny/knowledge-graph.git" },
-  "publishConfig": { "registry": "https://npm.pkg.github.com" }
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/http-danny/knowledge-graph.git"
+  },
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com"
+  }
 }
