@@ -80341,6 +80341,7 @@ var OpenAiCompatibleEmbedderAdapter = class extends OpenAiWireEmbedderAdapter {
 };
 
 // src/adapters/embedder/voyage.ts
+import { createRequire } from "node:module";
 var MAX_BATCH_SIZE = 128;
 var MAX_RETRIES = 5;
 var BASE_BACKOFF_MS = 5e3;
@@ -80385,7 +80386,7 @@ var VoyageEmbedderAdapter = class {
       this.clientPromise = (async () => {
         let mod;
         try {
-          mod = await import("voyageai");
+          mod = createRequire(import.meta.url)("voyageai");
         } catch {
           throw new Error(
             "voyage embedder adapter requires the 'voyageai' package, which is not installed. Run: pnpm add voyageai"
@@ -83330,13 +83331,19 @@ var QdrantVectorAdapter = class {
   }
   async search(physicalName, input) {
     const qdrantFilter = input.filter !== void 0 ? translatePortableFilter(input.filter) : void 0;
-    const response = await this.client.query(physicalName, {
-      query: input.vector,
-      limit: input.topK,
-      with_payload: true,
-      with_vector: false,
-      ...qdrantFilter !== void 0 ? { filter: qdrantFilter } : {}
-    });
+    let response;
+    try {
+      response = await this.client.query(physicalName, {
+        query: input.vector,
+        limit: input.topK,
+        with_payload: true,
+        with_vector: false,
+        ...qdrantFilter !== void 0 ? { filter: qdrantFilter } : {}
+      });
+    } catch (err) {
+      if (!(await this.client.collectionExists(physicalName)).exists) return [];
+      throw err;
+    }
     const points = response.points ?? [];
     return points.map((p) => ({
       // `id` may come back as string or number from the SDK; we standardize
