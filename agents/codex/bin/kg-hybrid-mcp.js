@@ -85472,6 +85472,7 @@ function resolveSecret(opts) {
     );
     return void 0;
   }
+  if (opts.lenient) return "";
   throw new MissingEnvVarError(opts.envVarName, opts.fieldPath);
 }
 var LOCAL_HOSTS = /* @__PURE__ */ new Set(["localhost", "127.0.0.1", "::1", "[::1]"]);
@@ -86632,19 +86633,19 @@ var ConfigError = class extends Error {
     this.name = "ConfigError";
   }
 };
-function resolveLlm(cfg, env) {
+function resolveLlm(cfg, env, lenient = false) {
   if (cfg.provider === "anthropic") {
-    const apiKey = cfg.keychainRef !== void 0 ? keychainPending(cfg.keychainRef, cfg.apiKeyEnv, "llm.apiKeyEnv") : resolveSecret({ envVarName: cfg.apiKeyEnv, fieldPath: "llm.apiKeyEnv", env });
+    const apiKey = cfg.keychainRef !== void 0 ? keychainPending(cfg.keychainRef, cfg.apiKeyEnv, "llm.apiKeyEnv") : resolveSecret({ envVarName: cfg.apiKeyEnv, fieldPath: "llm.apiKeyEnv", env, lenient });
     return { provider: "anthropic", model: cfg.model, apiKey };
   }
   if (cfg.provider === "openai-compatible") {
-    const apiKey = cfg.keychainRef !== void 0 ? keychainPending(cfg.keychainRef, cfg.apiKeyEnv ?? "KG_OPENAI_API_KEY", "llm.apiKeyEnv") : cfg.apiKeyEnv !== void 0 ? resolveSecret({ envVarName: cfg.apiKeyEnv, fieldPath: "llm.apiKeyEnv", hostUrl: cfg.baseUrl, env }) : void 0;
+    const apiKey = cfg.keychainRef !== void 0 ? keychainPending(cfg.keychainRef, cfg.apiKeyEnv ?? "KG_OPENAI_API_KEY", "llm.apiKeyEnv") : cfg.apiKeyEnv !== void 0 ? resolveSecret({ envVarName: cfg.apiKeyEnv, fieldPath: "llm.apiKeyEnv", hostUrl: cfg.baseUrl, env, lenient }) : void 0;
     return apiKey !== void 0 ? { provider: "openai-compatible", model: cfg.model, baseUrl: cfg.baseUrl, apiKey } : { provider: "openai-compatible", model: cfg.model, baseUrl: cfg.baseUrl };
   }
   if (cfg.provider === "portkey") {
-    const apiKey = cfg.keychainRef !== void 0 ? keychainPending(cfg.keychainRef, cfg.apiKeyEnv, "llm.apiKeyEnv") : resolveSecret({ envVarName: cfg.apiKeyEnv, fieldPath: "llm.apiKeyEnv", env });
+    const apiKey = cfg.keychainRef !== void 0 ? keychainPending(cfg.keychainRef, cfg.apiKeyEnv, "llm.apiKeyEnv") : resolveSecret({ envVarName: cfg.apiKeyEnv, fieldPath: "llm.apiKeyEnv", env, lenient });
     const baseUrl = cfg.baseUrl ?? PORTKEY_CLOUD_BASE_URL;
-    const upstreamApiKey = cfg.upstreamApiKeyEnv !== void 0 ? resolveSecret({ envVarName: cfg.upstreamApiKeyEnv, fieldPath: "llm.upstreamApiKeyEnv", env }) : void 0;
+    const upstreamApiKey = cfg.upstreamApiKeyEnv !== void 0 ? resolveSecret({ envVarName: cfg.upstreamApiKeyEnv, fieldPath: "llm.upstreamApiKeyEnv", env, lenient }) : void 0;
     return {
       provider: "portkey",
       model: cfg.model,
@@ -86656,7 +86657,7 @@ function resolveLlm(cfg, env) {
     };
   }
   if (cfg.provider === "litellm") {
-    const apiKey = cfg.keychainRef !== void 0 ? keychainPending(cfg.keychainRef, cfg.apiKeyEnv ?? "KG_LITELLM_API_KEY", "llm.apiKeyEnv") : cfg.apiKeyEnv !== void 0 ? resolveSecret({ envVarName: cfg.apiKeyEnv, fieldPath: "llm.apiKeyEnv", hostUrl: cfg.baseUrl, env }) : void 0;
+    const apiKey = cfg.keychainRef !== void 0 ? keychainPending(cfg.keychainRef, cfg.apiKeyEnv ?? "KG_LITELLM_API_KEY", "llm.apiKeyEnv") : cfg.apiKeyEnv !== void 0 ? resolveSecret({ envVarName: cfg.apiKeyEnv, fieldPath: "llm.apiKeyEnv", hostUrl: cfg.baseUrl, env, lenient }) : void 0;
     return apiKey !== void 0 ? { provider: "litellm", model: cfg.model, baseUrl: cfg.baseUrl, apiKey } : { provider: "litellm", model: cfg.model, baseUrl: cfg.baseUrl };
   }
   if (cfg.provider === "claude-cli") {
@@ -86670,19 +86671,19 @@ function resolveLlm(cfg, env) {
   }
   throw new ConfigError(`LLM provider '${cfg.provider}' is not supported by the resolver`);
 }
-function resolveEmbedder2(cfg, env) {
+function resolveEmbedder2(cfg, env, lenient = false) {
   if (cfg.provider === "voyage") {
-    const apiKey = cfg.keychainRef !== void 0 ? keychainPending(cfg.keychainRef, cfg.apiKeyEnv, "embedder.apiKeyEnv") : resolveSecret({ envVarName: cfg.apiKeyEnv, fieldPath: "embedder.apiKeyEnv", env });
+    const apiKey = cfg.keychainRef !== void 0 ? keychainPending(cfg.keychainRef, cfg.apiKeyEnv, "embedder.apiKeyEnv") : resolveSecret({ envVarName: cfg.apiKeyEnv, fieldPath: "embedder.apiKeyEnv", env, lenient });
     return cfg.dimensions !== void 0 ? { provider: "voyage", model: cfg.model, apiKey, dimensions: cfg.dimensions } : { provider: "voyage", model: cfg.model, apiKey };
   }
   if (cfg.provider === "openai-compatible") {
-    const apiKey = cfg.keychainRef !== void 0 ? keychainPending(cfg.keychainRef, cfg.apiKeyEnv ?? "KG_OPENAI_API_KEY", "embedder.apiKeyEnv") : cfg.apiKeyEnv !== void 0 ? resolveSecret({ envVarName: cfg.apiKeyEnv, fieldPath: "embedder.apiKeyEnv", hostUrl: cfg.baseUrl, env }) : void 0;
+    const apiKey = cfg.keychainRef !== void 0 ? keychainPending(cfg.keychainRef, cfg.apiKeyEnv ?? "KG_OPENAI_API_KEY", "embedder.apiKeyEnv") : cfg.apiKeyEnv !== void 0 ? resolveSecret({ envVarName: cfg.apiKeyEnv, fieldPath: "embedder.apiKeyEnv", hostUrl: cfg.baseUrl, env, lenient }) : void 0;
     return apiKey !== void 0 ? { provider: "openai-compatible", model: cfg.model, baseUrl: cfg.baseUrl, apiKey, dimensions: cfg.dimensions } : { provider: "openai-compatible", model: cfg.model, baseUrl: cfg.baseUrl, dimensions: cfg.dimensions };
   }
   if (cfg.provider === "portkey") {
-    const apiKey = cfg.keychainRef !== void 0 ? keychainPending(cfg.keychainRef, cfg.apiKeyEnv, "embedder.apiKeyEnv") : resolveSecret({ envVarName: cfg.apiKeyEnv, fieldPath: "embedder.apiKeyEnv", env });
+    const apiKey = cfg.keychainRef !== void 0 ? keychainPending(cfg.keychainRef, cfg.apiKeyEnv, "embedder.apiKeyEnv") : resolveSecret({ envVarName: cfg.apiKeyEnv, fieldPath: "embedder.apiKeyEnv", env, lenient });
     const baseUrl = cfg.baseUrl ?? PORTKEY_CLOUD_BASE_URL;
-    const upstreamApiKey = cfg.upstreamApiKeyEnv !== void 0 ? resolveSecret({ envVarName: cfg.upstreamApiKeyEnv, fieldPath: "embedder.upstreamApiKeyEnv", env }) : void 0;
+    const upstreamApiKey = cfg.upstreamApiKeyEnv !== void 0 ? resolveSecret({ envVarName: cfg.upstreamApiKeyEnv, fieldPath: "embedder.upstreamApiKeyEnv", env, lenient }) : void 0;
     return {
       provider: "portkey",
       model: cfg.model,
@@ -86695,30 +86696,31 @@ function resolveEmbedder2(cfg, env) {
     };
   }
   if (cfg.provider === "litellm") {
-    const apiKey = cfg.keychainRef !== void 0 ? keychainPending(cfg.keychainRef, cfg.apiKeyEnv ?? "KG_LITELLM_API_KEY", "embedder.apiKeyEnv") : cfg.apiKeyEnv !== void 0 ? resolveSecret({ envVarName: cfg.apiKeyEnv, fieldPath: "embedder.apiKeyEnv", hostUrl: cfg.baseUrl, env }) : void 0;
+    const apiKey = cfg.keychainRef !== void 0 ? keychainPending(cfg.keychainRef, cfg.apiKeyEnv ?? "KG_LITELLM_API_KEY", "embedder.apiKeyEnv") : cfg.apiKeyEnv !== void 0 ? resolveSecret({ envVarName: cfg.apiKeyEnv, fieldPath: "embedder.apiKeyEnv", hostUrl: cfg.baseUrl, env, lenient }) : void 0;
     return apiKey !== void 0 ? { provider: "litellm", model: cfg.model, baseUrl: cfg.baseUrl, apiKey, dimensions: cfg.dimensions } : { provider: "litellm", model: cfg.model, baseUrl: cfg.baseUrl, dimensions: cfg.dimensions };
   }
   throw new ConfigError(`Embedder provider '${cfg.provider}' is not supported by the resolver`);
 }
-function resolveVector2(cfg, env) {
+function resolveVector2(cfg, env, lenient = false) {
   if (cfg.provider === "chroma-cloud") {
-    const apiKey2 = cfg.keychainRef !== void 0 ? keychainPending(cfg.keychainRef, cfg.apiKeyEnv, "vector.apiKeyEnv") : resolveSecret({ envVarName: cfg.apiKeyEnv, fieldPath: "vector.apiKeyEnv", env });
+    const apiKey2 = cfg.keychainRef !== void 0 ? keychainPending(cfg.keychainRef, cfg.apiKeyEnv, "vector.apiKeyEnv") : resolveSecret({ envVarName: cfg.apiKeyEnv, fieldPath: "vector.apiKeyEnv", env, lenient });
     return { provider: "chroma-cloud", tenant: cfg.tenant, database: cfg.database, apiKey: apiKey2, collection: cfg.collection };
   }
   if (cfg.provider === "chroma") {
-    const apiKey2 = cfg.keychainRef !== void 0 ? keychainPending(cfg.keychainRef, cfg.apiKeyEnv ?? "KG_CHROMA_API_KEY", "vector.apiKeyEnv") : cfg.apiKeyEnv !== void 0 ? resolveSecret({ envVarName: cfg.apiKeyEnv, fieldPath: "vector.apiKeyEnv", hostUrl: cfg.url, env }) : void 0;
+    const apiKey2 = cfg.keychainRef !== void 0 ? keychainPending(cfg.keychainRef, cfg.apiKeyEnv ?? "KG_CHROMA_API_KEY", "vector.apiKeyEnv") : cfg.apiKeyEnv !== void 0 ? resolveSecret({ envVarName: cfg.apiKeyEnv, fieldPath: "vector.apiKeyEnv", hostUrl: cfg.url, env, lenient }) : void 0;
     return apiKey2 !== void 0 ? { provider: "chroma", url: cfg.url, apiKey: apiKey2, collection: cfg.collection } : { provider: "chroma", url: cfg.url, collection: cfg.collection };
   }
-  const apiKey = cfg.keychainRef !== void 0 ? keychainPending(cfg.keychainRef, cfg.apiKeyEnv ?? "KG_QDRANT_API_KEY", "vector.apiKeyEnv") : cfg.apiKeyEnv !== void 0 ? resolveSecret({ envVarName: cfg.apiKeyEnv, fieldPath: "vector.apiKeyEnv", hostUrl: cfg.url, env }) : void 0;
+  const apiKey = cfg.keychainRef !== void 0 ? keychainPending(cfg.keychainRef, cfg.apiKeyEnv ?? "KG_QDRANT_API_KEY", "vector.apiKeyEnv") : cfg.apiKeyEnv !== void 0 ? resolveSecret({ envVarName: cfg.apiKeyEnv, fieldPath: "vector.apiKeyEnv", hostUrl: cfg.url, env, lenient }) : void 0;
   return apiKey !== void 0 ? { provider: "qdrant", url: cfg.url, apiKey, collection: cfg.collection } : { provider: "qdrant", url: cfg.url, collection: cfg.collection };
 }
-function resolveGraph2(cfg, env) {
+function resolveGraph2(cfg, env, lenient = false) {
   const username = resolveSecret({
     envVarName: cfg.usernameEnv,
     fieldPath: "graph.usernameEnv",
     hostUrl: cfg.uri,
     defaultValue: "neo4j",
-    env
+    env,
+    lenient
   });
   const password = cfg.keychainRef !== void 0 ? keychainPending(cfg.keychainRef, cfg.passwordEnv, "graph.passwordEnv") : resolveSecret({
     envVarName: cfg.passwordEnv,
@@ -86726,7 +86728,8 @@ function resolveGraph2(cfg, env) {
     hostUrl: cfg.uri,
     // env > machine-global secret file > literal 'knowledge-graph'.
     defaultValue: resolveNeo4jPassword({ env }),
-    env
+    env,
+    lenient
   });
   return { provider: "neo4j", uri: cfg.uri, database: cfg.database, username, password };
 }
@@ -86746,13 +86749,14 @@ function expandConnectors(connectors, expand) {
     }
   };
 }
-function resolveSecrets(parsed, env = process.env) {
+function resolveSecrets(parsed, env = process.env, opts = {}) {
+  const lenient = opts.lenientSecrets ?? false;
   const result = {
     version: 1,
-    llm: resolveLlm(parsed.llm, env),
-    embedder: resolveEmbedder2(parsed.embedder, env),
-    vector: resolveVector2(parsed.vector, env),
-    graph: resolveGraph2(parsed.graph, env),
+    llm: resolveLlm(parsed.llm, env, lenient),
+    embedder: resolveEmbedder2(parsed.embedder, env, lenient),
+    vector: resolveVector2(parsed.vector, env, lenient),
+    graph: resolveGraph2(parsed.graph, env, lenient),
     discovery: parsed.discovery,
     state: parsed.state,
     corpus: { id: parsed.corpus?.id ?? "default", ...parsed.corpus?.name ? { name: parsed.corpus.name } : {}, rootPath: "" },
@@ -86815,7 +86819,7 @@ function loadConfig(opts = {}) {
       `discovery.globs is empty in ${configPath}. You must declare at least one discovery glob.`
     );
   }
-  const resolved = resolveSecrets(withDefaults, env);
+  const resolved = resolveSecrets(withDefaults, env, { lenientSecrets: opts.lenientSecrets ?? false });
   const configDir = dirname2(configPath);
   const corpusBlock = withDefaults.corpus;
   const explicitRoot = corpusBlock?.rootPath;
