@@ -85521,14 +85521,18 @@ var OpenAiCompatibleLlmSchema = external_exports.object({
   provider: external_exports.literal("openai-compatible"),
   model: external_exports.string().min(1),
   baseUrl: external_exports.string().url(),
-  apiKeyEnv: external_exports.string().min(1).optional()
+  apiKeyEnv: external_exports.string().min(1).optional(),
   // optional for localhost (spec §4.5)
+  keychainRef: external_exports.string().min(1).optional()
+  // Phase C.keychain (spec §3): overrides apiKeyEnv
 });
 var AnthropicLlmSchema = external_exports.object({
   provider: external_exports.literal("anthropic"),
   model: external_exports.string().min(1),
-  apiKeyEnv: external_exports.string().min(1)
+  apiKeyEnv: external_exports.string().min(1),
   // required: cloud, no local relaxation
+  keychainRef: external_exports.string().min(1).optional()
+  // Phase C.keychain (spec §3): overrides apiKeyEnv
 });
 var PortkeyLlmSchema = external_exports.object({
   provider: external_exports.literal("portkey"),
@@ -85542,8 +85546,10 @@ var PortkeyLlmSchema = external_exports.object({
   // -> x-portkey-provider
   configId: external_exports.string().min(1).optional(),
   // -> x-portkey-config
-  upstreamApiKeyEnv: external_exports.string().min(1).optional()
+  upstreamApiKeyEnv: external_exports.string().min(1).optional(),
   // -> Authorization: Bearer (BYO upstream token)
+  keychainRef: external_exports.string().min(1).optional()
+  // Phase C.keychain (spec §3): overrides apiKeyEnv
 });
 var LitellmLlmSchema = external_exports.object({
   provider: external_exports.literal("litellm"),
@@ -85551,8 +85557,10 @@ var LitellmLlmSchema = external_exports.object({
   // proxy-side alias
   baseUrl: external_exports.string().url(),
   // required: self-hosted proxy, e.g. http://localhost:4000
-  apiKeyEnv: external_exports.string().min(1).optional()
+  apiKeyEnv: external_exports.string().min(1).optional(),
   // optional + localhost-relaxed (like openai-compatible)
+  keychainRef: external_exports.string().min(1).optional()
+  // Phase C.keychain (spec §3): overrides apiKeyEnv
 });
 var ClaudeCliLlmSchema = external_exports.object({
   provider: external_exports.literal("claude-cli"),
@@ -85577,16 +85585,20 @@ var OpenAiCompatibleEmbedderSchema = external_exports.object({
   model: external_exports.string().min(1),
   baseUrl: external_exports.string().url(),
   apiKeyEnv: external_exports.string().min(1).optional(),
-  dimensions: external_exports.number().int().positive()
+  dimensions: external_exports.number().int().positive(),
   // required (no introspection API)
+  keychainRef: external_exports.string().min(1).optional()
+  // Phase C.keychain (spec §3): overrides apiKeyEnv
 });
 var VoyageEmbedderSchema = external_exports.object({
   provider: external_exports.literal("voyage"),
   model: external_exports.string().min(1),
   apiKeyEnv: external_exports.string().min(1),
   // required: cloud
-  dimensions: external_exports.number().int().positive().optional()
+  dimensions: external_exports.number().int().positive().optional(),
   // optional: lookup table fallback by model
+  keychainRef: external_exports.string().min(1).optional()
+  // Phase C.keychain (spec §3): overrides apiKeyEnv
 });
 var PortkeyEmbedderSchema = external_exports.object({
   provider: external_exports.literal("portkey"),
@@ -85596,15 +85608,19 @@ var PortkeyEmbedderSchema = external_exports.object({
   providerSlug: external_exports.string().min(1).optional(),
   configId: external_exports.string().min(1).optional(),
   upstreamApiKeyEnv: external_exports.string().min(1).optional(),
-  dimensions: external_exports.number().int().positive()
+  dimensions: external_exports.number().int().positive(),
   // required: no introspection API
+  keychainRef: external_exports.string().min(1).optional()
+  // Phase C.keychain (spec §3): overrides apiKeyEnv
 });
 var LitellmEmbedderSchema = external_exports.object({
   provider: external_exports.literal("litellm"),
   model: external_exports.string().min(1),
   baseUrl: external_exports.string().url(),
   apiKeyEnv: external_exports.string().min(1).optional(),
-  dimensions: external_exports.number().int().positive()
+  dimensions: external_exports.number().int().positive(),
+  keychainRef: external_exports.string().min(1).optional()
+  // Phase C.keychain (spec §3): overrides apiKeyEnv
 });
 var EmbedderSchema = external_exports.discriminatedUnion("provider", [
   OpenAiCompatibleEmbedderSchema,
@@ -85624,7 +85640,9 @@ var QdrantSchema = external_exports.object({
   }),
   apiKeyEnv: external_exports.string().min(1).optional(),
   // optional for localhost
-  collection: external_exports.string().min(1).default("kg")
+  collection: external_exports.string().min(1).default("kg"),
+  keychainRef: external_exports.string().min(1).optional()
+  // Phase C.keychain (spec §3): overrides apiKeyEnv
 });
 var ChromaSchema = external_exports.object({
   provider: external_exports.literal("chroma"),
@@ -85633,7 +85651,9 @@ var ChromaSchema = external_exports.object({
   }),
   apiKeyEnv: external_exports.string().min(1).optional(),
   // optional for localhost (self-hosted)
-  collection: external_exports.string().min(1).default("kg")
+  collection: external_exports.string().min(1).default("kg"),
+  keychainRef: external_exports.string().min(1).optional()
+  // Phase C.keychain (spec §3): overrides apiKeyEnv
 });
 var ChromaCloudSchema = external_exports.object({
   provider: external_exports.literal("chroma-cloud"),
@@ -85641,7 +85661,9 @@ var ChromaCloudSchema = external_exports.object({
   database: external_exports.string().min(1),
   apiKeyEnv: external_exports.string().min(1),
   // required: managed cloud
-  collection: external_exports.string().min(1).default("kg")
+  collection: external_exports.string().min(1).default("kg"),
+  keychainRef: external_exports.string().min(1).optional()
+  // Phase C.keychain (spec §3): overrides apiKeyEnv
 });
 var VectorSchema = external_exports.discriminatedUnion("provider", [QdrantSchema, ChromaSchema, ChromaCloudSchema]);
 var Neo4jGraphSchema = external_exports.object({
@@ -85651,7 +85673,9 @@ var Neo4jGraphSchema = external_exports.object({
   }),
   database: external_exports.string().min(1),
   usernameEnv: external_exports.string().min(1),
-  passwordEnv: external_exports.string().min(1)
+  passwordEnv: external_exports.string().min(1),
+  keychainRef: external_exports.string().min(1).optional()
+  // Phase C.keychain (spec §3): overrides passwordEnv
 });
 var GraphSchema = external_exports.discriminatedUnion("provider", [Neo4jGraphSchema]);
 var DiscoverySchema = external_exports.object({
@@ -85759,8 +85783,10 @@ var SqlConnectorSchema = external_exports.object({
   // must match the .sql files' corpus for reconciliation (§5)
   schema: SqlSchemaScopeSchema.optional(),
   // mode #2 allowlist
-  data: SqlDataSchema.optional()
+  data: SqlDataSchema.optional(),
   // mode #3 — omit for schema-only
+  keychainRef: external_exports.string().min(1).optional()
+  // Phase C.keychain (spec §3): overrides connectionEnv
 }).strict();
 var JiraConnectorSchema = external_exports.object({
   enabled: external_exports.boolean(),
@@ -86267,6 +86293,9 @@ var UserConfigSchema = external_exports.object({
   rankingFeedback: external_exports.boolean().default(false)
   // fork 1 — off by default
 }).strict();
+var SecretsSchema = external_exports.object({
+  envFiles: external_exports.array(external_exports.string().min(1)).optional()
+}).strict();
 var ConfigSchema = external_exports.object({
   version: external_exports.literal(1),
   llm: LlmSchema,
@@ -86276,6 +86305,7 @@ var ConfigSchema = external_exports.object({
   discovery: DiscoverySchema,
   state: StateSchema,
   corpus: CorpusConfigSchema.optional(),
+  secrets: SecretsSchema.optional(),
   codeIngestion: CodeIngestionSchema.optional(),
   repos: external_exports.array(RepoEntrySchema).optional(),
   explore: ExploreSchema.optional(),
@@ -86435,6 +86465,159 @@ function resolveNeo4jPassword(opts = {}) {
   return NEO4J_PASSWORD_LITERAL_DEFAULT;
 }
 
+// src/connectors/secrets.ts
+var KEYRING_MISSING_DEP_MESSAGE = "@napi-rs/keyring is not installed \u2014 install it (npm i @napi-rs/keyring) or use apiKeyEnv instead";
+function parseKeychainRef(ref) {
+  const segments = ref.split("/");
+  if (segments.length < 3) {
+    throw new Error(
+      `Invalid keychainRef '${ref}' \u2014 expected at least 'service-a/service-b/account' (e.g. 'kg/jira/<host>'); got ${segments.length} segment(s)`
+    );
+  }
+  const service = segments.slice(0, 2).join("/");
+  const account = segments.slice(2).join("/");
+  if (segments.slice(0, 2).some((s) => s === "") || account === "") {
+    throw new Error(
+      `Invalid keychainRef '${ref}' \u2014 service and account must be non-empty (e.g. 'kg/jira/<host>')`
+    );
+  }
+  return [service, account];
+}
+function keyringAddress(ref, platform) {
+  if (platform !== "win32") return parseKeychainRef(ref);
+  parseKeychainRef(ref);
+  const segments = ref.split("/");
+  const account = segments[0];
+  const service = segments.slice(1).join("/");
+  return [service, account];
+}
+async function defaultKeyringLoader() {
+  let mod;
+  try {
+    const keyringModule = "@napi-rs/keyring";
+    mod = await import(keyringModule);
+  } catch {
+    throw new Error(KEYRING_MISSING_DEP_MESSAGE);
+  }
+  const Entry = mod.Entry;
+  return {
+    getPassword(service, account) {
+      try {
+        const pw = new Entry(service, account).getPassword();
+        return Promise.resolve(pw ?? null);
+      } catch {
+        return Promise.resolve(null);
+      }
+    },
+    setPassword(service, account, value) {
+      new Entry(service, account).setPassword(value);
+      return Promise.resolve();
+    },
+    deletePassword(service, account) {
+      new Entry(service, account).deletePassword();
+      return Promise.resolve();
+    }
+  };
+}
+var KeychainSecretStore = class {
+  constructor(keyring = defaultKeyringLoader, platform = process.platform) {
+    this.keyring = keyring;
+    this.platform = platform;
+  }
+  /** Candidate addresses, current-platform first; on win32 add the legacy address as
+   *  a READ fallback so pre-migration entries still resolve. */
+  addresses(keychainRef) {
+    const current = keyringAddress(keychainRef, this.platform);
+    if (this.platform !== "win32") return [current];
+    return [current, parseKeychainRef(keychainRef)];
+  }
+  async get(ref) {
+    if (ref.keychainRef === void 0) return void 0;
+    const kr = await this.keyring();
+    for (const [service, account] of this.addresses(ref.keychainRef)) {
+      const pw = await kr.getPassword(service, account);
+      if (pw != null) return pw;
+    }
+    return void 0;
+  }
+  /** STORE a secret VALUE in the OS keychain under `ref.keychainRef`'s
+   *  `(service, account)` (INC2b — the WRITE capability, the inverse of `get`).
+   *  The value lives ONLY in the keychain; D12 holds — config carries only the
+   *  `keychainRef` NAME (the route writes that separately through the config seam).
+   *
+   *  Errors are VALUE-FREE by construction (we never interpolate `value`):
+   *   • no `keychainRef` → cannot address an entry (a clear throw),
+   *   • the dep is absent → `KEYRING_MISSING_DEP_MESSAGE` (via the loader),
+   *   • the keyring lacks `setPassword` (a read-only fake / no write capability)
+   *     → a clear throw (never a silent no-op). */
+  async set(ref, value) {
+    if (ref.keychainRef === void 0) {
+      throw new Error("cannot store a keychain secret without a keychainRef (the entry address)");
+    }
+    const kr = await this.keyring();
+    if (typeof kr.setPassword !== "function") {
+      throw new Error("this keyring does not support writing (no setPassword) \u2014 cannot store the secret");
+    }
+    const [service, account] = keyringAddress(ref.keychainRef, this.platform);
+    await kr.setPassword(service, account, value);
+  }
+  /** DELETE the keychain entry addressed by `ref.keychainRef` (rollback/migration).
+   *  Throws (never silent) when the keyring has no delete capability. Value-free. */
+  async delete(ref) {
+    if (ref.keychainRef === void 0) {
+      throw new Error("cannot delete a keychain secret without a keychainRef (the entry address)");
+    }
+    const kr = await this.keyring();
+    if (typeof kr.deletePassword !== "function") {
+      throw new Error("this keyring does not support deleting (no deletePassword) \u2014 cannot remove the secret");
+    }
+    const [service, account] = keyringAddress(ref.keychainRef, this.platform);
+    await kr.deletePassword(service, account);
+  }
+};
+
+// src/lib/config-keychain.ts
+function keychainPending(keychainRef, envVarName, fieldPath) {
+  return { keychainRef, envVarName, fieldPath };
+}
+function isKeychainPending(v) {
+  return typeof v === "object" && v !== null && "keychainRef" in v && "envVarName" in v && "fieldPath" in v;
+}
+function pendingFields(config2) {
+  return isKeychainPending(config2.llm?.apiKey) || isKeychainPending(config2.embedder?.apiKey) || isKeychainPending(config2.vector?.apiKey) || isKeychainPending(config2.graph?.password);
+}
+async function resolveKeychainSecrets(config2, deps = {}) {
+  if (!pendingFields(config2)) return config2;
+  const env = deps.env ?? process.env;
+  const warn = deps.warn ?? ((m) => process.stderr.write(m + "\n"));
+  const store = deps.keychainStore ?? new KeychainSecretStore();
+  const fill = async (v, role) => {
+    if (!isKeychainPending(v)) return v;
+    const ambient = env[v.envVarName];
+    if (ambient !== void 0 && ambient !== "") {
+      warn(`env var ${v.envVarName} is shadowing your configured keychain secret for ${role}`);
+      return ambient;
+    }
+    const fromKeychain = await store.get({ connector: "kg", key: role, keychainRef: v.keychainRef });
+    if (fromKeychain !== void 0 && fromKeychain !== "") return fromKeychain;
+    throw new MissingEnvVarError(v.envVarName, `${v.fieldPath} (keychain ${v.keychainRef})`);
+  };
+  const llmApiKeyPresent = "apiKey" in config2.llm;
+  const embApiKeyPresent = "apiKey" in config2.embedder;
+  const vecApiKeyPresent = "apiKey" in config2.vector;
+  const llmApiKey = llmApiKeyPresent ? await fill(config2.llm.apiKey, "llm") : void 0;
+  const embApiKey = embApiKeyPresent ? await fill(config2.embedder.apiKey, "embedder") : void 0;
+  const vecApiKey = vecApiKeyPresent ? await fill(config2.vector.apiKey, "vector") : void 0;
+  const graphPassword = await fill(config2.graph.password, "graph");
+  return {
+    ...config2,
+    llm: { ...config2.llm, ...llmApiKeyPresent ? { apiKey: llmApiKey } : {} },
+    embedder: { ...config2.embedder, ...embApiKeyPresent ? { apiKey: embApiKey } : {} },
+    vector: { ...config2.vector, ...vecApiKeyPresent ? { apiKey: vecApiKey } : {} },
+    graph: { ...config2.graph, password: graphPassword }
+  };
+}
+
 // src/lib/config.ts
 var ConfigError = class extends Error {
   constructor(message) {
@@ -86444,15 +86627,15 @@ var ConfigError = class extends Error {
 };
 function resolveLlm(cfg, env) {
   if (cfg.provider === "anthropic") {
-    const apiKey = resolveSecret({ envVarName: cfg.apiKeyEnv, fieldPath: "llm.apiKeyEnv", env });
+    const apiKey = cfg.keychainRef !== void 0 ? keychainPending(cfg.keychainRef, cfg.apiKeyEnv, "llm.apiKeyEnv") : resolveSecret({ envVarName: cfg.apiKeyEnv, fieldPath: "llm.apiKeyEnv", env });
     return { provider: "anthropic", model: cfg.model, apiKey };
   }
   if (cfg.provider === "openai-compatible") {
-    const apiKey = cfg.apiKeyEnv !== void 0 ? resolveSecret({ envVarName: cfg.apiKeyEnv, fieldPath: "llm.apiKeyEnv", hostUrl: cfg.baseUrl, env }) : void 0;
+    const apiKey = cfg.keychainRef !== void 0 ? keychainPending(cfg.keychainRef, cfg.apiKeyEnv ?? "KG_OPENAI_API_KEY", "llm.apiKeyEnv") : cfg.apiKeyEnv !== void 0 ? resolveSecret({ envVarName: cfg.apiKeyEnv, fieldPath: "llm.apiKeyEnv", hostUrl: cfg.baseUrl, env }) : void 0;
     return apiKey !== void 0 ? { provider: "openai-compatible", model: cfg.model, baseUrl: cfg.baseUrl, apiKey } : { provider: "openai-compatible", model: cfg.model, baseUrl: cfg.baseUrl };
   }
   if (cfg.provider === "portkey") {
-    const apiKey = resolveSecret({ envVarName: cfg.apiKeyEnv, fieldPath: "llm.apiKeyEnv", env });
+    const apiKey = cfg.keychainRef !== void 0 ? keychainPending(cfg.keychainRef, cfg.apiKeyEnv, "llm.apiKeyEnv") : resolveSecret({ envVarName: cfg.apiKeyEnv, fieldPath: "llm.apiKeyEnv", env });
     const baseUrl = cfg.baseUrl ?? PORTKEY_CLOUD_BASE_URL;
     const upstreamApiKey = cfg.upstreamApiKeyEnv !== void 0 ? resolveSecret({ envVarName: cfg.upstreamApiKeyEnv, fieldPath: "llm.upstreamApiKeyEnv", env }) : void 0;
     return {
@@ -86466,7 +86649,7 @@ function resolveLlm(cfg, env) {
     };
   }
   if (cfg.provider === "litellm") {
-    const apiKey = cfg.apiKeyEnv !== void 0 ? resolveSecret({ envVarName: cfg.apiKeyEnv, fieldPath: "llm.apiKeyEnv", hostUrl: cfg.baseUrl, env }) : void 0;
+    const apiKey = cfg.keychainRef !== void 0 ? keychainPending(cfg.keychainRef, cfg.apiKeyEnv ?? "KG_LITELLM_API_KEY", "llm.apiKeyEnv") : cfg.apiKeyEnv !== void 0 ? resolveSecret({ envVarName: cfg.apiKeyEnv, fieldPath: "llm.apiKeyEnv", hostUrl: cfg.baseUrl, env }) : void 0;
     return apiKey !== void 0 ? { provider: "litellm", model: cfg.model, baseUrl: cfg.baseUrl, apiKey } : { provider: "litellm", model: cfg.model, baseUrl: cfg.baseUrl };
   }
   if (cfg.provider === "claude-cli") {
@@ -86482,15 +86665,15 @@ function resolveLlm(cfg, env) {
 }
 function resolveEmbedder2(cfg, env) {
   if (cfg.provider === "voyage") {
-    const apiKey = resolveSecret({ envVarName: cfg.apiKeyEnv, fieldPath: "embedder.apiKeyEnv", env });
+    const apiKey = cfg.keychainRef !== void 0 ? keychainPending(cfg.keychainRef, cfg.apiKeyEnv, "embedder.apiKeyEnv") : resolveSecret({ envVarName: cfg.apiKeyEnv, fieldPath: "embedder.apiKeyEnv", env });
     return cfg.dimensions !== void 0 ? { provider: "voyage", model: cfg.model, apiKey, dimensions: cfg.dimensions } : { provider: "voyage", model: cfg.model, apiKey };
   }
   if (cfg.provider === "openai-compatible") {
-    const apiKey = cfg.apiKeyEnv !== void 0 ? resolveSecret({ envVarName: cfg.apiKeyEnv, fieldPath: "embedder.apiKeyEnv", hostUrl: cfg.baseUrl, env }) : void 0;
+    const apiKey = cfg.keychainRef !== void 0 ? keychainPending(cfg.keychainRef, cfg.apiKeyEnv ?? "KG_OPENAI_API_KEY", "embedder.apiKeyEnv") : cfg.apiKeyEnv !== void 0 ? resolveSecret({ envVarName: cfg.apiKeyEnv, fieldPath: "embedder.apiKeyEnv", hostUrl: cfg.baseUrl, env }) : void 0;
     return apiKey !== void 0 ? { provider: "openai-compatible", model: cfg.model, baseUrl: cfg.baseUrl, apiKey, dimensions: cfg.dimensions } : { provider: "openai-compatible", model: cfg.model, baseUrl: cfg.baseUrl, dimensions: cfg.dimensions };
   }
   if (cfg.provider === "portkey") {
-    const apiKey = resolveSecret({ envVarName: cfg.apiKeyEnv, fieldPath: "embedder.apiKeyEnv", env });
+    const apiKey = cfg.keychainRef !== void 0 ? keychainPending(cfg.keychainRef, cfg.apiKeyEnv, "embedder.apiKeyEnv") : resolveSecret({ envVarName: cfg.apiKeyEnv, fieldPath: "embedder.apiKeyEnv", env });
     const baseUrl = cfg.baseUrl ?? PORTKEY_CLOUD_BASE_URL;
     const upstreamApiKey = cfg.upstreamApiKeyEnv !== void 0 ? resolveSecret({ envVarName: cfg.upstreamApiKeyEnv, fieldPath: "embedder.upstreamApiKeyEnv", env }) : void 0;
     return {
@@ -86505,21 +86688,21 @@ function resolveEmbedder2(cfg, env) {
     };
   }
   if (cfg.provider === "litellm") {
-    const apiKey = cfg.apiKeyEnv !== void 0 ? resolveSecret({ envVarName: cfg.apiKeyEnv, fieldPath: "embedder.apiKeyEnv", hostUrl: cfg.baseUrl, env }) : void 0;
+    const apiKey = cfg.keychainRef !== void 0 ? keychainPending(cfg.keychainRef, cfg.apiKeyEnv ?? "KG_LITELLM_API_KEY", "embedder.apiKeyEnv") : cfg.apiKeyEnv !== void 0 ? resolveSecret({ envVarName: cfg.apiKeyEnv, fieldPath: "embedder.apiKeyEnv", hostUrl: cfg.baseUrl, env }) : void 0;
     return apiKey !== void 0 ? { provider: "litellm", model: cfg.model, baseUrl: cfg.baseUrl, apiKey, dimensions: cfg.dimensions } : { provider: "litellm", model: cfg.model, baseUrl: cfg.baseUrl, dimensions: cfg.dimensions };
   }
   throw new ConfigError(`Embedder provider '${cfg.provider}' is not supported by the resolver`);
 }
 function resolveVector2(cfg, env) {
   if (cfg.provider === "chroma-cloud") {
-    const apiKey2 = resolveSecret({ envVarName: cfg.apiKeyEnv, fieldPath: "vector.apiKeyEnv", env });
+    const apiKey2 = cfg.keychainRef !== void 0 ? keychainPending(cfg.keychainRef, cfg.apiKeyEnv, "vector.apiKeyEnv") : resolveSecret({ envVarName: cfg.apiKeyEnv, fieldPath: "vector.apiKeyEnv", env });
     return { provider: "chroma-cloud", tenant: cfg.tenant, database: cfg.database, apiKey: apiKey2, collection: cfg.collection };
   }
   if (cfg.provider === "chroma") {
-    const apiKey2 = cfg.apiKeyEnv !== void 0 ? resolveSecret({ envVarName: cfg.apiKeyEnv, fieldPath: "vector.apiKeyEnv", hostUrl: cfg.url, env }) : void 0;
+    const apiKey2 = cfg.keychainRef !== void 0 ? keychainPending(cfg.keychainRef, cfg.apiKeyEnv ?? "KG_CHROMA_API_KEY", "vector.apiKeyEnv") : cfg.apiKeyEnv !== void 0 ? resolveSecret({ envVarName: cfg.apiKeyEnv, fieldPath: "vector.apiKeyEnv", hostUrl: cfg.url, env }) : void 0;
     return apiKey2 !== void 0 ? { provider: "chroma", url: cfg.url, apiKey: apiKey2, collection: cfg.collection } : { provider: "chroma", url: cfg.url, collection: cfg.collection };
   }
-  const apiKey = cfg.apiKeyEnv !== void 0 ? resolveSecret({ envVarName: cfg.apiKeyEnv, fieldPath: "vector.apiKeyEnv", hostUrl: cfg.url, env }) : void 0;
+  const apiKey = cfg.keychainRef !== void 0 ? keychainPending(cfg.keychainRef, cfg.apiKeyEnv ?? "KG_QDRANT_API_KEY", "vector.apiKeyEnv") : cfg.apiKeyEnv !== void 0 ? resolveSecret({ envVarName: cfg.apiKeyEnv, fieldPath: "vector.apiKeyEnv", hostUrl: cfg.url, env }) : void 0;
   return apiKey !== void 0 ? { provider: "qdrant", url: cfg.url, apiKey, collection: cfg.collection } : { provider: "qdrant", url: cfg.url, collection: cfg.collection };
 }
 function resolveGraph2(cfg, env) {
@@ -86530,7 +86713,7 @@ function resolveGraph2(cfg, env) {
     defaultValue: "neo4j",
     env
   });
-  const password = resolveSecret({
+  const password = cfg.keychainRef !== void 0 ? keychainPending(cfg.keychainRef, cfg.passwordEnv, "graph.passwordEnv") : resolveSecret({
     envVarName: cfg.passwordEnv,
     fieldPath: "graph.passwordEnv",
     hostUrl: cfg.uri,
@@ -86577,6 +86760,7 @@ function resolveSecrets(parsed, env = process.env) {
   if (parsed.audit !== void 0) result.audit = parsed.audit;
   if (parsed.connectors !== void 0) result.connectors = parsed.connectors;
   if (parsed.user !== void 0) result.user = parsed.user;
+  if (parsed.secrets?.envFiles !== void 0) result.secrets = { envFiles: parsed.secrets.envFiles };
   return result;
 }
 function loadConfig(opts = {}) {
@@ -86635,6 +86819,9 @@ function loadConfig(opts = {}) {
   resolved.configPath = configPath;
   if (!isAbsolute(resolved.state.dir)) {
     resolved.state.dir = resolve(rootPath, resolved.state.dir);
+  }
+  if (resolved.secrets?.envFiles !== void 0) {
+    resolved.secrets = { envFiles: resolved.secrets.envFiles.map((p) => expandEnvAndHome(p, { env })) };
   }
   return resolved;
 }
@@ -86747,7 +86934,7 @@ function buildCorpusScope(opts) {
 }
 
 // src/server/context.ts
-var cached2;
+var cached2 = null;
 function buildContext(config2) {
   const neo4j6 = resolveGraph(config2.graph, "read");
   const voyage = resolveEmbedder(config2.embedder);
@@ -86780,13 +86967,13 @@ function buildContext(config2) {
     corpusScope
   };
 }
-function getContext() {
+async function ensureContext() {
   if (cached2) return cached2;
-  cached2 = buildContext(loadConfig());
+  cached2 = buildContext(await resolveKeychainSecrets(loadConfig()));
   return cached2;
 }
 function peekContext() {
-  return cached2 ?? null;
+  return cached2;
 }
 
 // src/server/substrate-compat.ts
@@ -86972,7 +87159,7 @@ function createWrap(deps = {}) {
     return async (args) => {
       const start = performance.now();
       try {
-        const ctx = getContext();
+        const ctx = await ensureContext();
         await ensureCompatible(ctx);
         const result = await handler(args, ctx);
         auditLog?.log({ op: name, params: args, result, ok: true, ms: Math.round(performance.now() - start) });
@@ -94632,7 +94819,14 @@ async function main() {
   process.on("SIGINT", () => void shutdown("SIGINT"));
   process.on("SIGTERM", () => void shutdown("SIGTERM"));
   const { wrap: wrap2 } = createWrap({
-    auditLog: createAuditLogger({ getConfig: () => getContext().config, source: "mcp" })
+    auditLog: createAuditLogger({
+      getConfig: () => {
+        const ctx = peekContext();
+        if (!ctx) throw new Error("mcp-context cold");
+        return ctx.config;
+      },
+      source: "mcp"
+    })
   });
   server.registerTool(
     "kg_search",
