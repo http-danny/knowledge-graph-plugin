@@ -1,6 +1,6 @@
 {
   "name": "@http-danny/knowledge-graph",
-  "version": "0.5.1",
+  "version": "0.5.2",
   "private": true,
   "type": "module",
   "description": "Self-contained read-only kg MCP server bundle (hybrid GraphRAG + code intelligence). 'type:module' makes Node treat the ESM bundle correctly; pnpm-workspace resolves it.",

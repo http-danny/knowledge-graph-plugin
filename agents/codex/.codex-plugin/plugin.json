@@ -1,7 +1,7 @@
 {
   "name": "knowledge-graph",
   "description": "Read-only hybrid GraphRAG + code-intelligence over your local corpus, exposed as the kg MCP server (safe tool profile).",
-  "version": "0.5.1",
+  "version": "0.5.2",
   "mcpServers": "./.mcp.json",
   "skills": "./skills/"
 }

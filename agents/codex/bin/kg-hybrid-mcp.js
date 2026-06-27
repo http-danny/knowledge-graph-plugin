@@ -83331,19 +83331,13 @@ var QdrantVectorAdapter = class {
   }
   async search(physicalName, input) {
     const qdrantFilter = input.filter !== void 0 ? translatePortableFilter(input.filter) : void 0;
-    let response;
-    try {
-      response = await this.client.query(physicalName, {
-        query: input.vector,
-        limit: input.topK,
-        with_payload: true,
-        with_vector: false,
-        ...qdrantFilter !== void 0 ? { filter: qdrantFilter } : {}
-      });
-    } catch (err) {
-      if (!(await this.client.collectionExists(physicalName)).exists) return [];
-      throw err;
-    }
+    const response = await this.client.query(physicalName, {
+      query: input.vector,
+      limit: input.topK,
+      with_payload: true,
+      with_vector: false,
+      ...qdrantFilter !== void 0 ? { filter: qdrantFilter } : {}
+    });
     const points = response.points ?? [];
     return points.map((p) => ({
       // `id` may come back as string or number from the SDK; we standardize
@@ -88409,11 +88403,17 @@ async function handleKgCodeSemanticSearch(args, ctx) {
   const filter = andFilters(codeFilter, corpusClause);
   const [vector] = await ctx.voyage.embed([args.query], "query");
   if (!vector) throw new Error("embedder returned no vector for query");
-  const hits = await ctx.qdrant.search(ctx.codeChunksPhysicalCollection, {
-    vector,
-    topK: limit2,
-    ...filter !== void 0 ? { filter } : {}
-  });
+  let hits;
+  try {
+    hits = await ctx.qdrant.search(ctx.codeChunksPhysicalCollection, {
+      vector,
+      topK: limit2,
+      ...filter !== void 0 ? { filter } : {}
+    });
+  } catch (err) {
+    if (isMissingCollectionError(err)) return [];
+    throw err;
+  }
   if (hits.length === 0) return [];
   const scoreById = /* @__PURE__ */ new Map();
   for (const h of hits) {
@@ -88448,6 +88448,20 @@ async function handleKgCodeSemanticSearch(args, ctx) {
     if (typeof row.path === "string") hit.path = row.path;
     return hit;
   }).sort((a, b) => b.score - a.score);
+}
+function isMissingCollectionError(err) {
+  const status = extractStatus(err);
+  if (status === 404) return true;
+  const msg = (err instanceof Error ? err.message : String(err)).toLowerCase();
+  return msg.includes("not found") || msg.includes("doesn't exist") || msg.includes("does not exist") || msg.includes("404");
+}
+function extractStatus(err) {
+  if (err !== null && typeof err === "object") {
+    const o = err;
+    if (typeof o["status"] === "number") return o["status"];
+    if (typeof o["statusCode"] === "number") return o["statusCode"];
+  }
+  return void 0;
 }
 
 // src/server/tools/kg-code-neighbors.ts
@@ -89107,7 +89121,7 @@ async function handleKgContextSearch(args, ctx) {
       ...filter !== void 0 ? { filter } : {}
     });
   } catch (err) {
-    if (isMissingCollectionError(err)) {
+    if (isMissingCollectionError2(err)) {
       logger.debug("kg_context_search: context collection absent \u2014 returning empty", {
         collection: ctx.contextPhysicalCollection
       });
@@ -89222,13 +89236,13 @@ async function hydrateContextNodes(ctx, ids) {
   }
   return map;
 }
-function isMissingCollectionError(err) {
-  const status = extractStatus(err);
+function isMissingCollectionError2(err) {
+  const status = extractStatus2(err);
   if (status === 404) return true;
   const msg = (err instanceof Error ? err.message : String(err)).toLowerCase();
   return msg.includes("not found") || msg.includes("doesn't exist") || msg.includes("does not exist") || msg.includes("404");
 }
-function extractStatus(err) {
+function extractStatus2(err) {
   if (err !== null && typeof err === "object") {
     const o = err;
     if (typeof o["status"] === "number") return o["status"];
@@ -89352,7 +89366,7 @@ async function handleKgFindPrecedents(args, ctx) {
       ...filter !== void 0 ? { filter } : {}
     });
   } catch (err) {
-    if (isMissingCollectionError2(err)) {
+    if (isMissingCollectionError3(err)) {
       logger.debug("kg_find_precedents: context collection absent \u2014 returning empty", {
         collection: ctx.contextPhysicalCollection
       });
@@ -89449,13 +89463,13 @@ async function hydrateDecisions(ctx, ids) {
   }
   return map;
 }
-function isMissingCollectionError2(err) {
-  const status = extractStatus2(err);
+function isMissingCollectionError3(err) {
+  const status = extractStatus3(err);
   if (status === 404) return true;
   const msg = (err instanceof Error ? err.message : String(err)).toLowerCase();
   return msg.includes("not found") || msg.includes("doesn't exist") || msg.includes("does not exist") || msg.includes("404");
 }
-function extractStatus2(err) {
+function extractStatus3(err) {
   if (err !== null && typeof err === "object") {
     const o = err;
     if (typeof o["status"] === "number") return o["status"];
@@ -89546,7 +89560,7 @@ async function runSemantic(args, ctx, limit2) {
       ...filter !== void 0 ? { filter } : {}
     });
   } catch (err) {
-    if (isMissingCollectionError3(err)) {
+    if (isMissingCollectionError4(err)) {
       logger.debug("kg_outcomes: context collection absent \u2014 returning empty", {
         collection: ctx.contextPhysicalCollection
       });
@@ -89693,13 +89707,13 @@ async function fetchEvidence(ctx, decisionIds) {
 function pickString(v) {
   return typeof v === "string" && v.length > 0 ? v : null;
 }
-function isMissingCollectionError3(err) {
-  const status = extractStatus3(err);
+function isMissingCollectionError4(err) {
+  const status = extractStatus4(err);
   if (status === 404) return true;
   const msg = (err instanceof Error ? err.message : String(err)).toLowerCase();
   return msg.includes("not found") || msg.includes("doesn't exist") || msg.includes("does not exist") || msg.includes("404");
 }
-function extractStatus3(err) {
+function extractStatus4(err) {
   if (err !== null && typeof err === "object") {
     const o = err;
     if (typeof o["status"] === "number") return o["status"];
@@ -89767,7 +89781,7 @@ async function runSemantic2(args, ctx, operatorId) {
       ...filter !== void 0 ? { filter } : {}
     });
   } catch (err) {
-    if (isMissingCollectionError4(err)) {
+    if (isMissingCollectionError5(err)) {
       logger.debug("kg_user_context: user collection absent \u2014 structural fallback", {
         collection: ctx.userPhysicalCollection
       });
@@ -89894,13 +89908,13 @@ function orderById(rows, order) {
 function pickString2(v) {
   return typeof v === "string" && v.length > 0 ? v : null;
 }
-function isMissingCollectionError4(err) {
-  const status = extractStatus4(err);
+function isMissingCollectionError5(err) {
+  const status = extractStatus5(err);
   if (status === 404) return true;
   const msg = (err instanceof Error ? err.message : String(err)).toLowerCase();
   return msg.includes("not found") || msg.includes("doesn't exist") || msg.includes("does not exist") || msg.includes("404");
 }
-function extractStatus4(err) {
+function extractStatus5(err) {
   if (err !== null && typeof err === "object") {
     const o = err;
     if (typeof o["status"] === "number") return o["status"];
@@ -90368,7 +90382,7 @@ async function handleKgDataSearch(args, ctx) {
       ...filter !== void 0 ? { filter } : {}
     });
   } catch (err) {
-    if (isMissingCollectionError5(err)) {
+    if (isMissingCollectionError6(err)) {
       logger.debug("kg_data_search: data collection absent \u2014 returning empty", { collection: dataPhysical });
       return { results: [], note: NO_DATA_NOTE };
     }
@@ -90443,13 +90457,13 @@ function pickPrimaryLabel2(labels) {
   const nonMarker = labels.find((l) => l !== "Knowledge");
   return nonMarker ?? primary ?? "DbEntity";
 }
-function isMissingCollectionError5(err) {
-  const status = extractStatus5(err);
+function isMissingCollectionError6(err) {
+  const status = extractStatus6(err);
   if (status === 404) return true;
   const msg = (err instanceof Error ? err.message : String(err)).toLowerCase();
   return msg.includes("not found") || msg.includes("doesn't exist") || msg.includes("does not exist") || msg.includes("404");
 }
-function extractStatus5(err) {
+function extractStatus6(err) {
   if (err !== null && typeof err === "object") {
     const o = err;
     if (typeof o["status"] === "number") return o["status"];
@@ -90848,7 +90862,7 @@ async function handleKgWorkItemSearch(args, ctx) {
       ...filter !== void 0 ? { filter } : {}
     });
   } catch (err) {
-    if (isMissingCollectionError6(err)) {
+    if (isMissingCollectionError7(err)) {
       logger.debug("kg_work_item_search: worktracker collection absent \u2014 returning empty", { collection: physical });
       return { results: [], note: NO_WORKTRACKER_NOTE };
     }
@@ -90924,13 +90938,13 @@ function pickPrimaryLabel3(labels) {
   const nonMarker = labels.find((l) => l !== "Knowledge");
   return nonMarker ?? primary ?? "WorkItem";
 }
-function isMissingCollectionError6(err) {
-  const status = extractStatus6(err);
+function isMissingCollectionError7(err) {
+  const status = extractStatus7(err);
   if (status === 404) return true;
   const msg = (err instanceof Error ? err.message : String(err)).toLowerCase();
   return msg.includes("not found") || msg.includes("doesn't exist") || msg.includes("does not exist") || msg.includes("404");
 }
-function extractStatus6(err) {
+function extractStatus7(err) {
   if (err !== null && typeof err === "object") {
     const o = err;
     if (typeof o["status"] === "number") return o["status"];
@@ -91364,7 +91378,7 @@ async function handleKgVcsSearch(args, ctx) {
       ...filter !== void 0 ? { filter } : {}
     });
   } catch (err) {
-    if (isMissingCollectionError7(err)) {
+    if (isMissingCollectionError8(err)) {
       logger.debug("kg_vcs_search: vcs collection absent \u2014 returning empty", { collection: physical });
       return { results: [], note: NO_VCS_NOTE };
     }
@@ -91439,13 +91453,13 @@ function pickPrimaryLabel4(labels) {
   const nonMarker = labels.find((l) => l !== "Knowledge" && l !== "Context" && l !== "ContextEvent");
   return nonMarker ?? labels[0] ?? "PullRequest";
 }
-function isMissingCollectionError7(err) {
-  const status = extractStatus7(err);
+function isMissingCollectionError8(err) {
+  const status = extractStatus8(err);
   if (status === 404) return true;
   const msg = (err instanceof Error ? err.message : String(err)).toLowerCase();
   return msg.includes("not found") || msg.includes("doesn't exist") || msg.includes("does not exist") || msg.includes("404");
 }
-function extractStatus7(err) {
+function extractStatus8(err) {
   if (err !== null && typeof err === "object") {
     const o = err;
     if (typeof o["status"] === "number") return o["status"];
@@ -91986,7 +92000,7 @@ async function handleKgCicdSearch(args, ctx) {
       ...filter !== void 0 ? { filter } : {}
     });
   } catch (err) {
-    if (isMissingCollectionError8(err)) {
+    if (isMissingCollectionError9(err)) {
       logger.debug("kg_cicd_search: cicd collection absent \u2014 returning empty", { collection: physical });
       return { results: [], note: NO_CICD_NOTE };
     }
@@ -92060,13 +92074,13 @@ function pickPrimaryLabel5(labels) {
   const nonMarker = labels.find((l) => l !== "Knowledge" && l !== "Context" && l !== "ContextEvent");
   return nonMarker ?? labels[0] ?? "Incident";
 }
-function isMissingCollectionError8(err) {
-  const status = extractStatus8(err);
+function isMissingCollectionError9(err) {
+  const status = extractStatus9(err);
   if (status === 404) return true;
   const msg = (err instanceof Error ? err.message : String(err)).toLowerCase();
   return msg.includes("not found") || msg.includes("doesn't exist") || msg.includes("does not exist") || msg.includes("404");
 }
-function extractStatus8(err) {
+function extractStatus9(err) {
   if (err !== null && typeof err === "object") {
     const o = err;
     if (typeof o["status"] === "number") return o["status"];
@@ -92461,7 +92475,7 @@ async function handleKgChatSearch(args, ctx) {
       ...filter !== void 0 ? { filter } : {}
     });
   } catch (err) {
-    if (isMissingCollectionError9(err)) {
+    if (isMissingCollectionError10(err)) {
       logger.debug("kg_chat_search: chat collection absent \u2014 returning empty", { collection: physical });
       return { results: [], note: NO_CHAT_NOTE };
     }
@@ -92529,13 +92543,13 @@ async function hydrateNodes5(ctx, ids, corpus) {
   }
   return map;
 }
-function isMissingCollectionError9(err) {
-  const status = extractStatus9(err);
+function isMissingCollectionError10(err) {
+  const status = extractStatus10(err);
   if (status === 404) return true;
   const msg = (err instanceof Error ? err.message : String(err)).toLowerCase();
   return msg.includes("not found") || msg.includes("doesn't exist") || msg.includes("does not exist") || msg.includes("404");
 }
-function extractStatus9(err) {
+function extractStatus10(err) {
   if (err !== null && typeof err === "object") {
     const o = err;
     if (typeof o["status"] === "number") return o["status"];
@@ -92682,7 +92696,7 @@ async function handleKgMeetingSearch(args, ctx) {
       ...filter !== void 0 ? { filter } : {}
     });
   } catch (err) {
-    if (isMissingCollectionError10(err)) {
+    if (isMissingCollectionError11(err)) {
       logger.debug("kg_meeting_search: meetings collection absent \u2014 returning empty", { collection: physical });
       return { results: [], note: NO_MEETINGS_NOTE };
     }
@@ -93043,13 +93057,13 @@ async function hydrateNodes6(ctx, ids, corpus) {
   }
   return map;
 }
-function isMissingCollectionError10(err) {
-  const status = extractStatus10(err);
+function isMissingCollectionError11(err) {
+  const status = extractStatus11(err);
   if (status === 404) return true;
   const msg = (err instanceof Error ? err.message : String(err)).toLowerCase();
   return msg.includes("not found") || msg.includes("doesn't exist") || msg.includes("does not exist") || msg.includes("404");
 }
-function extractStatus10(err) {
+function extractStatus11(err) {
   if (err !== null && typeof err === "object") {
     const o = err;
     if (typeof o["status"] === "number") return o["status"];
@@ -93466,7 +93480,7 @@ async function handleKgEmailSearch(args, ctx) {
       ...filter !== void 0 ? { filter } : {}
     });
   } catch (err) {
-    if (isMissingCollectionError11(err)) {
+    if (isMissingCollectionError12(err)) {
       logger.debug("kg_email_search: email collection absent \u2014 returning empty", { collection: physical });
       return { results: [], note: NO_EMAIL_NOTE };
     }
@@ -93534,13 +93548,13 @@ async function hydrateNodes7(ctx, ids, corpus) {
   }
   return map;
 }
-function isMissingCollectionError11(err) {
-  const status = extractStatus11(err);
+function isMissingCollectionError12(err) {
+  const status = extractStatus12(err);
   if (status === 404) return true;
   const msg = (err instanceof Error ? err.message : String(err)).toLowerCase();
   return msg.includes("not found") || msg.includes("doesn't exist") || msg.includes("does not exist") || msg.includes("404");
 }
-function extractStatus11(err) {
+function extractStatus12(err) {
   if (err !== null && typeof err === "object") {
     const o = err;
     if (typeof o["status"] === "number") return o["status"];
@@ -93986,7 +94000,7 @@ async function handleKgDocsSearch(args, ctx) {
       ...filter !== void 0 ? { filter } : {}
     });
   } catch (err) {
-    if (isMissingCollectionError12(err)) {
+    if (isMissingCollectionError13(err)) {
       logger.debug("kg_docs_search: docs collection absent \u2014 returning empty", { collection: physical });
       return { results: [], note: NO_DOCS_NOTE };
     }
@@ -94059,13 +94073,13 @@ async function hydrateNodes8(ctx, ids, corpus, label) {
   }
   return map;
 }
-function isMissingCollectionError12(err) {
-  const status = extractStatus12(err);
+function isMissingCollectionError13(err) {
+  const status = extractStatus13(err);
   if (status === 404) return true;
   const msg = (err instanceof Error ? err.message : String(err)).toLowerCase();
   return msg.includes("not found") || msg.includes("doesn't exist") || msg.includes("does not exist") || msg.includes("404");
 }
-function extractStatus12(err) {
+function extractStatus13(err) {
   if (err !== null && typeof err === "object") {
     const o = err;
     if (typeof o["status"] === "number") return o["status"];
@@ -94572,7 +94586,7 @@ async function handleKgDesignSearch(args, ctx) {
       ...filter !== void 0 ? { filter } : {}
     });
   } catch (err) {
-    if (isMissingCollectionError13(err)) {
+    if (isMissingCollectionError14(err)) {
       logger.debug("kg_design_search: design collection absent \u2014 returning empty", { collection: physical });
       return { results: [], note: NO_DESIGN_NOTE };
     }
@@ -94651,13 +94665,13 @@ async function hydrateNodes9(ctx, ids, corpus, kind, project) {
   }
   return map;
 }
-function isMissingCollectionError13(err) {
-  const status = extractStatus13(err);
+function isMissingCollectionError14(err) {
+  const status = extractStatus14(err);
   if (status === 404) return true;
   const msg = (err instanceof Error ? err.message : String(err)).toLowerCase();
   return msg.includes("not found") || msg.includes("doesn't exist") || msg.includes("does not exist") || msg.includes("404");
 }
-function extractStatus13(err) {
+function extractStatus14(err) {
   if (err !== null && typeof err === "object") {
     const o = err;
     if (typeof o["status"] === "number") return o["status"];
