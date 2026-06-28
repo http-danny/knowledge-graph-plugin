@@ -1,6 +1,6 @@
 {
   "name": "knowledge-graph",
-  "version": "0.6.0",
+  "version": "0.7.0",
   "description": "Read-only hybrid GraphRAG + code-intelligence over your local corpus, exposed as the kg MCP server.",
   "contextFileName": "GEMINI.md",
   "mcpServers": {
