@@ -51,9 +51,9 @@ they return structured, provenance-linked retrieval instead of raw text scans.
 | `kg_docs` | List/filter wiki pages (Confluence) by space, label, content type, author, parent (the page hierarchy), or last-modified range. |
 | `kg_docs_activity` | A wiki page's metadata + authors/editors + linked decisions (human-authored and wiki-mined, each labeled) + the code symbols it references and local docs it is about + the work items / pull requests / incidents discussed in it (the SDLC trace) + any contradictions. |
 | `kg_docs_search` | Semantic search over ingested wiki pages (find by meaning), optionally restricted to one space or label. |
-| `kg_design` | List/filter design files & mockups (Figma) by project, team, file, kind (frame/screen/component/componentSet), author, parent file (the file↔mockup hierarchy), or last-modified range. |
-| `kg_design_activity` | A design file/mockup's metadata + owner/editors + linked decisions (human-authored and figma-mined, each labeled) + the code symbols a mockup is about (the ABOUT_CODE design→code surface) + the work items / pull requests discussed in it (the SDLC trace) + any contradictions. |
-| `kg_design_search` | Semantic search over ingested design files & mockups (find by meaning), optionally restricted to one file, kind, or project. |
+| `kg_design` | List/filter design files & mockups (Figma and Zeplin) by project, team, file, kind (frame/screen/component/componentSet), author, parent file (the file↔mockup hierarchy), system (figma/zeplin), or last-modified range. |
+| `kg_design_activity` | A design file/mockup's metadata + owner/editors + linked decisions (human-authored and design-mined, each labeled by source) + the code symbols a mockup is about (the ABOUT_CODE design→code surface — Figma only; Zeplin mockups do not yet carry ABOUT_CODE links) + the work items / pull requests discussed in it (the SDLC trace) + any contradictions. |
+| `kg_design_search` | Semantic search over ingested design files & mockups (Figma and Zeplin — find by meaning), optionally restricted to one file, kind, or project. |
 | `kg_node_neighborhood` | Expand a graph node's immediate relationships. |
 | `kg_describe_schema` | Inspect labels + relationship types before querying. |
 
@@ -91,9 +91,10 @@ returns an empty result when docs embedding is off — the default; list/filter 
 an external source), scoped to `:WikiPage` so local markdown documents never appear in `kg_docs` /
 `kg_docs_activity`; **note the asymmetry: wiki pages surface via `kg_docs_search`, NOT `kg_search`** (the
 hybrid `kg_search` covers the local prose/code corpus, not connector-sourced wiki bodies). The `design`
-connector family — the SECOND **single-connector** family in this batch (config block `connectors.design`
-with a nested `figma` system; Zeplin / "Claude design" are documented roadmap) and the EIGHTH and FINAL
-connector family — adds three more **dynamically-registered** read tools when enabled: `kg_design`,
+connector family — no longer a single-connector family: it now supports two systems, **Figma** and
+**Zeplin** (config block `connectors.design` with nested `figma` and/or `zeplin` systems; "Claude
+design" remains documented roadmap) and is the EIGHTH and FINAL connector family — adds three more
+**dynamically-registered** read tools when enabled: `kg_design`,
 `kg_design_activity`, and `kg_design_search` (`kg_design_search` is **always** registered with the family,
 but returns an empty result when design embedding is off — the default; list/filter design nodes
 structurally via `kg_design` instead). Design artifacts are `:DesignArtifact` (the file) / `:Mockup` (a
@@ -101,11 +102,13 @@ frame/screen/component) nodes — **net-new Knowledge primaries, NOT the file-ow
 scoped to those labels so local markdown documents + code never appear in `kg_design` /
 `kg_design_activity`; **note the same asymmetry: design nodes surface via `kg_design_search`, NOT
 `kg_search`** (the hybrid `kg_search` covers the local prose/code corpus, not connector-sourced design
-bodies — which embed text-only, never images). Decisions
-mined from meeting transcripts, email threads, wiki pages, **and Figma comments** also surface in the existing
+bodies — which embed text-only, never images). **Deferred asymmetry:** Zeplin mockups do not yet carry
+`ABOUT_CODE` design→code links (Figma only, via Connected Components URL resolution); Zeplin
+Connected Components ingestion is a planned follow-up. Decisions
+mined from meeting transcripts, email threads, wiki pages, **Figma comments, and Zeplin comments** also surface in the existing
 `kg_context_search`/`kg_find_precedents` (one unified decision surface, labeled by
 `source`/`confidence`; the positive `sourceSystem` filter now also accepts
-`zoom`/`google-calendar`/`gmail`/`outlook`/`confluence`/`figma`). When the chat or email family is enabled
+`zoom`/`google-calendar`/`gmail`/`outlook`/`confluence`/`figma`/`zeplin`). When the chat or email family is enabled
 alongside `agent-sessions`, `kg_actor_activity` additionally surfaces the actor's chat threads / email
 threads. The **User layer** (the operator's own profile/preferences/saved-queries — the most private,
 per-operator, opt-in, **never-egress** layer) is surfaced by the **always-registered** `kg_user_context`

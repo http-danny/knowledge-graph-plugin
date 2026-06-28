@@ -86208,6 +86208,21 @@ var FigmaConnectorSchema = external_exports.object({
 }).strict().refine((c) => c.files.length > 0 || c.projects.length > 0 || c.teams.length > 0, {
   message: "connectors.design.figma must be scoped: declare a non-empty `files` and/or `projects` and/or `teams` (\xA715 \u2014 there is never an unscoped full-org fetch)"
 });
+var ZeplinConnectorSchema = external_exports.object({
+  enabled: external_exports.boolean(),
+  auth: external_exports.enum(["token"]).default("token"),
+  // shaped for future oauth; only token built
+  secret: DesignSecretSchema.optional(),
+  // { envVar } default KG_ZEPLIN_TOKEN; never a value (D12)
+  projects: external_exports.array(external_exports.string().min(1)).default([]),
+  organizations: external_exports.array(external_exports.string().min(1)).default([]),
+  maxProjects: external_exports.number().int().positive().default(200),
+  maxScreensPerProject: external_exports.number().int().positive().default(500),
+  maxComponentsPerProject: external_exports.number().int().positive().default(500),
+  nodeKinds: external_exports.array(external_exports.enum(["screen", "component"])).default(["screen", "component"])
+}).strict().refine((c) => c.projects.length > 0 || c.organizations.length > 0, {
+  message: "connectors.design.zeplin must be scoped: declare a non-empty `projects` and/or `organizations` (\xA715 \u2014 there is never an unscoped full-org fetch)"
+});
 var DesignConnectorSchema = external_exports.object({
   enabled: external_exports.boolean(),
   // Egress posture (D32, §9). 'none' (design nodes minted + structural, never
@@ -86222,6 +86237,8 @@ var DesignConnectorSchema = external_exports.object({
   mining: external_exports.enum(["none", "local", "cloud"]).default("none"),
   figma: FigmaConnectorSchema.optional(),
   // system 'figma' (INC1)
+  zeplin: ZeplinConnectorSchema.optional(),
+  // system 'zeplin' (INC0)
   // Opt-in metadata/behavior (default off, §9/§11.2/§11.3).
   includeComments: external_exports.boolean().default(false),
   // fold node comments into mineable/embeddable text + the mining anchor
@@ -86231,8 +86248,8 @@ var DesignConnectorSchema = external_exports.object({
   // cross-layer design→code ABOUT_CODE (§11.2)
   linkSdlc: external_exports.boolean().default(false)
   // cross-layer design→WorkItem/PullRequest SDLC link (§11.3)
-}).strict().refine((c) => c.figma !== void 0, {
-  message: "connectors.design must declare at least one connector (`figma`) (\xA715 \u2014 an enabled family with no connector fetches nothing)"
+}).strict().refine((c) => c.figma !== void 0 || c.zeplin !== void 0, {
+  message: "connectors.design must declare at least one connector (`figma` and/or `zeplin`) (\xA715 \u2014 an enabled family with no connector fetches nothing)"
 });
 var ConnectorsSchema = external_exports.object({
   agentSessions: AgentSessionsConnectorSchema.optional(),
@@ -89066,9 +89083,9 @@ var DEFAULT_RESULT_LIMIT2 = 10;
 var DEFAULT_TOKEN_BUDGET2 = 2e3;
 var NO_CONTEXT_NOTE = "no context graph yet \u2014 run `kg ingest` to build the context layer";
 var CONTEXT_NODE_TYPES = ["Decision", "Rationale", "ContextEvent", "Outcome"];
-var CONNECTOR_SOURCE_SYSTEMS = ["teams", "google-chat", "zoom", "google-calendar", "gmail", "outlook", "confluence", "figma"];
+var CONNECTOR_SOURCE_SYSTEMS = ["teams", "google-chat", "zoom", "google-calendar", "gmail", "outlook", "confluence", "figma", "zeplin"];
 var CONNECTOR_SOURCE_SYSTEM_SET = new Set(CONNECTOR_SOURCE_SYSTEMS);
-var CONNECTOR_MINED_SOURCES = /* @__PURE__ */ new Set(["chat-mined", "meeting-mined", "email-mined", "confluence-mined", "figma-mined"]);
+var CONNECTOR_MINED_SOURCES = /* @__PURE__ */ new Set(["chat-mined", "meeting-mined", "email-mined", "confluence-mined", "figma-mined", "zeplin-mined"]);
 var kgContextSearchInputShape = {
   question: external_exports.string().min(1).describe("Natural-language search query over the Context layer."),
   scope: external_exports.object({
@@ -89080,7 +89097,7 @@ var kgContextSearchInputShape = {
     // S7 §14 / S8 §14 — the POSITIVE connector-mined selector (a PortableFilter `in` on
     // the EXISTING `sourceSystem` payload field). Selects ONLY connector-mined decisions
     // (markdown context points carry no `sourceSystem`). Default (omitted) returns both.
-    sourceSystems: external_exports.array(external_exports.enum(CONNECTOR_SOURCE_SYSTEMS)).optional().describe("Restrict to decisions mined from these connector systems (teams/google-chat/zoom/google-calendar/gmail/outlook/confluence/figma). Selects only connector-mined decisions; markdown decisions are excluded."),
+    sourceSystems: external_exports.array(external_exports.enum(CONNECTOR_SOURCE_SYSTEMS)).optional().describe("Restrict to decisions mined from these connector systems (teams/google-chat/zoom/google-calendar/gmail/outlook/confluence/figma/zeplin). Selects only connector-mined decisions; markdown decisions are excluded."),
     // S7 §14 / S8 §14 — human-authored-only is an APP-SIDE drop (the PortableFilter has
     // no `ne`): results whose `source` is connector-mined (`chat-mined`/`meeting-mined`)
     // or whose `sourceSystem` is a connector system are dropped after hydration. Mutually
@@ -94139,6 +94156,7 @@ var docsFamily = {
 
 // src/connectors/design/ids.ts
 var FIGMA_SYSTEM = "figma";
+var ZEPLIN_SYSTEM = "zeplin";
 
 // src/connectors/design/tools.ts
 var MAX_NODES = 500;
@@ -94208,6 +94226,8 @@ var kgDesignInputShape = {
   includeMockups: external_exports.boolean().optional().describe("When true, list :Mockup nodes too (default lists :DesignArtifact files only; a kind/parentFile filter implies mockups)."),
   updatedSince: external_exports.string().min(1).optional().describe("ISO date/time lower bound on the file last-modified time (lastModifiedAt >=)."),
   updatedUntil: external_exports.string().min(1).optional().describe("ISO date/time upper bound on the file last-modified time (lastModifiedAt <=)."),
+  /** Filter to one design system. Pre-INC2 Figma nodes that lack the system property are matched via coalesce(…,'figma'). */
+  system: external_exports.enum(["figma", "zeplin"]).optional().describe("Filter to one design system: 'figma' or 'zeplin'. Pre-INC2 Figma nodes without a stored system property are treated as 'figma'."),
   limit: external_exports.number().int().positive().max(MAX_NODES).default(50).optional().describe("Max nodes to return."),
   corpus: external_exports.string().optional().describe("Corpus scope: omit = your own corpus (when scoping is active); 'all' = every corpus; '<id>' = that corpus.")
 };
@@ -94250,6 +94270,10 @@ async function handleKgDesign(args, ctx) {
       );
       params["author"] = args.author;
     }
+    if (args.system !== void 0) {
+      where.push("coalesce(d.system, 'figma') = $system");
+      params["system"] = args.system;
+    }
     const whereClause = where.length > 0 ? `WHERE ${where.join(" AND ")}` : "";
     const rows = await ctx.neo4j.runReadTx(async (tx) => {
       const r = await tx.run(
@@ -94259,7 +94283,8 @@ async function handleKgDesign(args, ctx) {
          WITH d, collect(DISTINCT { id: a.id, name: a.name, kind: a.kind })[0..${MAX_AUTHORS2}] AS authors
          RETURN d.id AS id, d.fileKey AS fileKey, d.name AS name,
                 d.projectKey AS projectKey, d.projectName AS projectName, d.teamName AS teamName,
-                d.url AS url, d.version AS version, d.lastModifiedAt AS lastModifiedAt, authors
+                d.url AS url, d.version AS version, d.lastModifiedAt AS lastModifiedAt,
+                d.system AS system, authors
          ORDER BY d.lastModifiedAt DESC
          LIMIT ${limit2}`,
         params
@@ -94283,7 +94308,8 @@ async function handleKgDesign(args, ctx) {
         lastModifiedAt: strOrNull10(row["lastModifiedAt"]),
         boundingBoxW: null,
         boundingBoxH: null,
-        authors: arrayOfActors7(row["authors"])
+        authors: arrayOfActors7(row["authors"]),
+        system: strOrNull10(row["system"])
       });
     }
   }
@@ -94320,6 +94346,10 @@ async function handleKgDesign(args, ctx) {
       }
       where.push(`EXISTS { MATCH (m)-[:SOURCED_FROM]->(d:DesignArtifact) WHERE ${fileWhere.join(" AND ")} }`);
     }
+    if (args.system !== void 0) {
+      where.push("coalesce(m.system, 'figma') = $system");
+      params["system"] = args.system;
+    }
     const whereClause = where.length > 0 ? `WHERE ${where.join(" AND ")}` : "";
     const mLimit = limit2 - out.length;
     const rows = await ctx.neo4j.runReadTx(async (tx) => {
@@ -94328,7 +94358,8 @@ async function handleKgDesign(args, ctx) {
          ${whereClause}
          RETURN m.id AS id, m.kind AS kind, m.fileKey AS fileKey, m.nodeId AS figmaNodeId,
                 m.name AS name, m.pageName AS pageName,
-                m.boundingBoxW AS boundingBoxW, m.boundingBoxH AS boundingBoxH
+                m.boundingBoxW AS boundingBoxW, m.boundingBoxH AS boundingBoxH,
+                m.system AS system
          ORDER BY m.name ASC
          LIMIT ${mLimit}`,
         params
@@ -94352,7 +94383,8 @@ async function handleKgDesign(args, ctx) {
         lastModifiedAt: null,
         boundingBoxW: numOrNull8(row["boundingBoxW"]),
         boundingBoxH: numOrNull8(row["boundingBoxH"]),
-        authors: []
+        authors: [],
+        system: strOrNull10(row["system"])
       });
     }
   }
@@ -94392,7 +94424,8 @@ function toNodeSummary(v) {
     lastModifiedAt: strOrNull10(o["lastModifiedAt"]),
     boundingBoxW: numOrNull8(o["boundingBoxW"]),
     boundingBoxH: numOrNull8(o["boundingBoxH"]),
-    imageMeta: parseImageMeta(o["imageMeta"])
+    imageMeta: parseImageMeta(o["imageMeta"]),
+    system: strOrNull10(o["system"])
   };
 }
 async function handleKgDesignActivity(args, ctx) {
@@ -94413,7 +94446,8 @@ async function handleKgDesignActivity(args, ctx) {
                 name: n.name, projectKey: n.projectKey, projectName: n.projectName,
                 teamName: n.teamName, pageName: n.pageName, description: n.description,
                 url: n.url, version: n.version, lastModifiedAt: n.lastModifiedAt,
-                boundingBoxW: n.boundingBoxW, boundingBoxH: n.boundingBoxH, imageMeta: n.imageMeta } AS node,
+                boundingBoxW: n.boundingBoxW, boundingBoxH: n.boundingBoxH, imageMeta: n.imageMeta,
+                system: n.system } AS node,
               authors,
               [l IN labels(n) WHERE l IN ['DesignArtifact','Mockup']][0] AS coreLabel
        LIMIT 1`,
@@ -94621,7 +94655,8 @@ async function handleKgDesignSearch(args, ctx) {
       url: strOrNull10(node.props["url"]),
       snippet,
       score: candidate.score,
-      properties: node.props
+      properties: node.props,
+      system: strOrNull10(node.props["system"])
     };
   });
   return { results };
@@ -94682,21 +94717,21 @@ function extractStatus14(err) {
 var TOOLS10 = [
   {
     name: "kg_design",
-    description: "List/filter ingested design files & mockups (Figma) by project, team, file, kind (frame/screen/component/componentSet), author, parent file (the file\u2194mockup hierarchy), and/or last-modified date range. Returns each node with its file key, name, project/team, page, url, version, bounding-box dims (mockups), and authors. Scoped to design artifacts/mockups (local markdown documents and code symbols do not appear). Corpus-scoped and read-only.",
+    description: "List/filter ingested design files & mockups (Figma and Zeplin) by project, team, file, system ('figma'|'zeplin'), kind (frame/screen/component/componentSet), author, parent file (the file\u2194mockup hierarchy), and/or last-modified date range. Returns each node with its file key, name, project/team, page, url, version, bounding-box dims (mockups), authors, and system (figma or zeplin). Scoped to design artifacts/mockups (local markdown documents and code symbols do not appear). Corpus-scoped and read-only.",
     inputShape: kgDesignInputShape,
     handler: handleKgDesign,
     profile: "safe"
   },
   {
     name: "kg_design_activity",
-    description: "For one design file or mockup (by id): its metadata, the owner/editors, the decisions linked to it (human-authored and figma-mined, each labeled by source), the cross-layer code symbols a mockup is about (the ABOUT_CODE design\u2192code surface), the work items / pull requests discussed in it (the SDLC trace), and any contradictions. The full design trace in one tool. Corpus-scoped and read-only.",
+    description: "For one design file or mockup (by id): its metadata (including system: figma or zeplin), the owner/editors, the decisions linked to it (human-authored and design-mined, each labeled by source), the cross-layer code symbols a mockup is about (the ABOUT_CODE design\u2192code surface \u2014 Figma only; Zeplin mockups do not yet carry ABOUT_CODE links, Connected Components ingestion is a planned follow-up), the work items / pull requests discussed in it (the SDLC trace), and any contradictions. The full design trace in one tool. Corpus-scoped and read-only.",
     inputShape: kgDesignActivityInputShape,
     handler: handleKgDesignActivity,
     profile: "safe"
   },
   {
     name: "kg_design_search",
-    description: "Semantic search over ingested design files & mockups (find by meaning), optionally restricted to one file, kind, or project. Returns matching nodes with their file key, name, url, and snippet. Corpus-scoped and read-only. When design embedding is off (embedding:`none`, the default) it returns an empty result \u2014 list/filter design nodes structurally via kg_design instead.",
+    description: "Semantic search over ingested design files & mockups (Figma and Zeplin \u2014 find by meaning), optionally restricted to one file, kind, or project. Returns matching nodes with their file key, name, url, snippet, and system (figma or zeplin). Corpus-scoped and read-only. When design embedding is off (embedding:`none`, the default) it returns an empty result \u2014 list/filter design nodes structurally via kg_design instead.",
     inputShape: kgDesignSearchInputShape,
     handler: handleKgDesignSearch,
     profile: "safe"
@@ -94719,8 +94754,29 @@ function figmaStubConnector() {
     }
   };
 }
-function resolveDesign(_cfg, _secrets) {
-  return figmaStubConnector();
+function zeplinStubConnector() {
+  const message = `design '${ZEPLIN_SYSTEM}' connector fetch/map is wired in the run path \u2014 the Zeplin REST driver+fetch are INC2, the structural map is INC3`;
+  return {
+    system: ZEPLIN_SYSTEM,
+    fetch(_since) {
+      throw new Error(message);
+    },
+    map(_record, _ctx) {
+      throw new Error(message);
+    }
+  };
+}
+function resolveDesign(cfg, _secrets) {
+  switch (cfg.system) {
+    case void 0:
+    case FIGMA_SYSTEM:
+      return figmaStubConnector();
+    // backward-compat: unset → figma (the §18.9 regression guard)
+    case ZEPLIN_SYSTEM:
+      return zeplinStubConnector();
+    default:
+      throw new AdapterNotWiredError("connector-system", cfg.system);
+  }
 }
 var designFamily = {
   family: "design",
