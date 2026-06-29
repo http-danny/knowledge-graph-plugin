@@ -85962,12 +85962,39 @@ var GoogleChatConnectorSchema = external_exports.object({
 }).strict().refine((c) => c.spaces.length > 0, {
   message: "connectors.chat.googleChat must be scoped: declare a non-empty `spaces` (\xA715 \u2014 no unscoped full-workspace fetch)"
 });
+var SlackConnectorSchema = external_exports.object({
+  tokenMode: external_exports.enum(["bot", "user"]).default("bot"),
+  secret: ChatSecretSchema.optional(),
+  // { envVar } default KG_SLACK_BOT_TOKEN / KG_SLACK_USER_TOKEN; never a value (D12)
+  // Scoping (D19) — channels, dmIds (1:1), and/or groupDmIds (mpim).
+  channels: external_exports.array(
+    external_exports.object({
+      channelId: external_exports.string().min(1),
+      sinceThreadTs: external_exports.string().min(1).optional()
+      // optional per-channel first-run floor (§7)
+    }).strict()
+  ).default([]),
+  dmIds: external_exports.array(external_exports.string().min(1)).default([]),
+  // im: 1:1 DMs (user mode only — refine below)
+  groupDmIds: external_exports.array(external_exports.string().min(1)).default([]),
+  // mpim: group DMs (allowed in bot mode)
+  since: external_exports.string().min(1).optional(),
+  // ISO date window (D19)
+  maxMessages: external_exports.number().int().positive()
+  // required per-run cap (mirrors teams.maxMessages)
+}).strict().refine((c) => c.tokenMode === "user" || c.dmIds.length === 0, {
+  message: `connectors.chat.slack: dmIds (im: 1:1 DMs) require tokenMode "user" \u2014 a bot token cannot read human 1:1 DMs (a Slack API limit, not a missing scope; you cannot invite a bot to someone else's 1:1 DM). Switch to user mode or remove dmIds. groupDmIds (mpim) ARE allowed in bot mode \u2014 a bot with the mpim:history scope that is a member of the MPIM can read it; a bot not in the MPIM is a fetch-time observability WARN (\xA78), not a config error.`
+}).refine((c) => c.channels.length > 0 || c.dmIds.length > 0 || c.groupDmIds.length > 0, {
+  message: "connectors.chat.slack must be scoped: declare a non-empty channels and/or dmIds and/or groupDmIds (\xA715 \u2014 no unscoped full-workspace fetch)"
+});
 var ChatConnectorSchema = external_exports.object({
   enabled: external_exports.boolean(),
   teams: TeamsConnectorSchema.optional(),
   // system 'teams' (INC2)
   googleChat: GoogleChatConnectorSchema.optional(),
   // system 'google-chat' (INC3)
+  slack: SlackConnectorSchema.optional(),
+  // system 'slack' (INC0)
   // Opt-in metadata (default off, §10.4/§11.3).
   reactions: external_exports.boolean().default(false),
   // :Message.reactionCounts (no per-actor REACTED_TO)
@@ -85994,8 +86021,8 @@ var ChatConnectorSchema = external_exports.object({
   // no LLM call — the default), 'local' (mine only with a local LLM, no egress),
   // 'cloud' (explicit warned opt-in).
   mining: external_exports.enum(["none", "local", "cloud"]).default("none")
-}).strict().refine((c) => c.teams !== void 0 || c.googleChat !== void 0, {
-  message: "connectors.chat must declare at least one connector (`teams` and/or `googleChat`) (\xA715 \u2014 an enabled family with no connector fetches nothing)"
+}).strict().refine((c) => c.teams !== void 0 || c.googleChat !== void 0 || c.slack !== void 0, {
+  message: "connectors.chat must declare at least one connector (`teams`, `googleChat`, and/or `slack`) (\xA715 \u2014 an enabled family with no connector fetches nothing)"
 });
 var ZoomConnectorSchema = external_exports.object({
   enabled: external_exports.boolean(),
@@ -89083,7 +89110,7 @@ var DEFAULT_RESULT_LIMIT2 = 10;
 var DEFAULT_TOKEN_BUDGET2 = 2e3;
 var NO_CONTEXT_NOTE = "no context graph yet \u2014 run `kg ingest` to build the context layer";
 var CONTEXT_NODE_TYPES = ["Decision", "Rationale", "ContextEvent", "Outcome"];
-var CONNECTOR_SOURCE_SYSTEMS = ["teams", "google-chat", "zoom", "google-calendar", "gmail", "outlook", "confluence", "figma", "zeplin"];
+var CONNECTOR_SOURCE_SYSTEMS = ["teams", "google-chat", "slack", "zoom", "google-calendar", "gmail", "outlook", "confluence", "figma", "zeplin"];
 var CONNECTOR_SOURCE_SYSTEM_SET = new Set(CONNECTOR_SOURCE_SYSTEMS);
 var CONNECTOR_MINED_SOURCES = /* @__PURE__ */ new Set(["chat-mined", "meeting-mined", "email-mined", "confluence-mined", "figma-mined", "zeplin-mined"]);
 var kgContextSearchInputShape = {
@@ -89097,7 +89124,7 @@ var kgContextSearchInputShape = {
     // S7 §14 / S8 §14 — the POSITIVE connector-mined selector (a PortableFilter `in` on
     // the EXISTING `sourceSystem` payload field). Selects ONLY connector-mined decisions
     // (markdown context points carry no `sourceSystem`). Default (omitted) returns both.
-    sourceSystems: external_exports.array(external_exports.enum(CONNECTOR_SOURCE_SYSTEMS)).optional().describe("Restrict to decisions mined from these connector systems (teams/google-chat/zoom/google-calendar/gmail/outlook/confluence/figma/zeplin). Selects only connector-mined decisions; markdown decisions are excluded."),
+    sourceSystems: external_exports.array(external_exports.enum(CONNECTOR_SOURCE_SYSTEMS)).optional().describe("Restrict to decisions mined from these connector systems (teams/google-chat/slack/zoom/google-calendar/gmail/outlook/confluence/figma/zeplin). Selects only connector-mined decisions; markdown decisions are excluded."),
     // S7 §14 / S8 §14 — human-authored-only is an APP-SIDE drop (the PortableFilter has
     // no `ne`): results whose `source` is connector-mined (`chat-mined`/`meeting-mined`)
     // or whose `sourceSystem` is a connector system are dropped after hydration. Mutually
@@ -92172,6 +92199,7 @@ var ciCdFamily = {
 // src/connectors/chat/ids.ts
 var TEAMS_SYSTEM = "teams";
 var GOOGLE_CHAT_SYSTEM = "google-chat";
+var SLACK_SYSTEM = "slack";
 
 // src/connectors/chat/tools.ts
 var MAX_THREADS = 500;
@@ -92224,8 +92252,8 @@ function clone7(v) {
   return JSON.parse(JSON.stringify(v));
 }
 var kgChatThreadsInputShape = {
-  system: external_exports.string().min(1).optional().describe('Filter to one chat system: "teams" or "google-chat".'),
-  channel: external_exports.string().min(1).optional().describe('Filter to a channel/space: matches the thread channelRef ("teams:<team>:<channel>") or spaceRef ("google-chat:spaces/...").'),
+  system: external_exports.string().min(1).optional().describe('Filter to one chat system: "teams", "google-chat", or "slack".'),
+  channel: external_exports.string().min(1).optional().describe('Filter to a channel/space: matches the thread channelRef ("teams:<team>:<channel>", "google-chat:spaces/...", or "slack:<team>:<conversation>").'),
   updatedSince: external_exports.string().min(1).optional().describe("ISO date/time lower bound on the thread occurred time (occurredAt >=)."),
   updatedUntil: external_exports.string().min(1).optional().describe("ISO date/time upper bound on the thread occurred time (occurredAt <=)."),
   participant: external_exports.string().min(1).optional().describe("Filter to threads a participant Actor took part in \u2014 matches the Actor id, name, or qualifiedName."),
@@ -92294,7 +92322,7 @@ async function handleKgChatThreads(args, ctx) {
 }
 var kgThreadActivityInputShape = {
   id: external_exports.string().min(1).optional().describe("The stable :ChatThread id (its chatThreadId). One of id / (system + channel) is required."),
-  system: external_exports.string().min(1).optional().describe('The chat system ("teams"/"google-chat") \u2014 used with `channel` when `id` is not given.'),
+  system: external_exports.string().min(1).optional().describe('The chat system ("teams"/"google-chat"/"slack") \u2014 used with `channel` when `id` is not given.'),
   channel: external_exports.string().min(1).optional().describe("The channelRef/spaceRef \u2014 used with `system` when `id` is not given."),
   corpus: external_exports.string().optional().describe("Corpus scope: omit = your own corpus (when scoping is active); 'all' = every corpus; '<id>' = that corpus.")
 };
@@ -92470,7 +92498,7 @@ async function handleKgThreadActivity(args, ctx) {
 }
 var kgChatSearchInputShape = {
   query: external_exports.string().min(1).describe("Natural-language search query over ingested chat messages (find by meaning)."),
-  system: external_exports.string().min(1).optional().describe('Restrict the search to one chat system: "teams" or "google-chat".'),
+  system: external_exports.string().min(1).optional().describe('Restrict the search to one chat system: "teams", "google-chat", or "slack".'),
   limit: external_exports.number().int().positive().max(MAX_SEARCH_RESULTS4).default(10).optional().describe("Max results to return."),
   corpus: external_exports.string().optional().describe("Corpus scope: omit = your own corpus (when scoping is active); 'all' = every corpus; '<id>' = that corpus.")
 };
@@ -92577,7 +92605,7 @@ function extractStatus10(err) {
 var TOOLS6 = [
   {
     name: "kg_chat_threads",
-    description: "List/filter ingested chat threads by system (teams/google-chat), channel/space, date range, and/or participant. Returns each thread with its system, channel/space ref, occurred time, message count, and participants. Scoped to chat threads (email threads do not appear). Corpus-scoped and read-only.",
+    description: "List/filter ingested chat threads by system (teams/google-chat/slack), channel/space, date range, and/or participant. Returns each thread with its system, channel/space ref, occurred time, message count, and participants. Scoped to chat threads (email threads do not appear). Corpus-scoped and read-only.",
     inputShape: kgChatThreadsInputShape,
     handler: handleKgChatThreads,
     profile: "safe"
@@ -92591,7 +92619,7 @@ var TOOLS6 = [
   },
   {
     name: "kg_chat_search",
-    description: "Semantic search over ingested chat messages (find by meaning), optionally restricted to one system (teams/google-chat). Returns matching messages with their thread, system, text, and occurred time. Corpus-scoped and read-only. When chat embedding is off (embedding:`none`, the default) it returns an empty result \u2014 list/filter threads structurally via kg_chat_threads instead.",
+    description: "Semantic search over ingested chat messages (find by meaning), optionally restricted to one system (teams/google-chat/slack). Returns matching messages with their thread, system, text, and occurred time. Corpus-scoped and read-only. When chat embedding is off (embedding:`none`, the default) it returns an empty result \u2014 list/filter threads structurally via kg_chat_threads instead.",
     inputShape: kgChatSearchInputShape,
     handler: handleKgChatSearch,
     profile: "safe"
@@ -92603,7 +92631,7 @@ var chatTools = {
 
 // src/connectors/chat/index.ts
 function stubConnector2(system, increment) {
-  const driverName = system === TEAMS_SYSTEM ? "Teams (Microsoft Graph)" : "Google Chat";
+  const driverName = system === TEAMS_SYSTEM ? "Teams (Microsoft Graph)" : system === GOOGLE_CHAT_SYSTEM ? "Google Chat" : system === SLACK_SYSTEM ? "Slack (Web API)" : system;
   const message = `chat '${system}' connector fetch/map is wired in ${increment} \u2014 the ${driverName} driver+map are ${increment}`;
   return {
     system,
@@ -92621,6 +92649,8 @@ function resolveChatStub(cfg, _secrets) {
       return stubConnector2(TEAMS_SYSTEM, "INC2");
     case GOOGLE_CHAT_SYSTEM:
       return stubConnector2(GOOGLE_CHAT_SYSTEM, "INC3");
+    case SLACK_SYSTEM:
+      return stubConnector2(SLACK_SYSTEM, "INC1");
     default:
       throw new AdapterNotWiredError("connector-system", cfg.system ?? "(unset)");
   }

@@ -39,9 +39,9 @@ they return structured, provenance-linked retrieval instead of raw text scans.
 | `kg_incidents` | List/filter incidents by service, status, urgency, assignee, or date. |
 | `kg_incident_activity` | An incident's event timeline + alerts + escalations & on-call + the fix/SDLC loop (triggered work item → pull request → merge commit → deployment) + any contradictions + the responders' other decisions & sessions. |
 | `kg_cicd_search` | Semantic search over ingested incidents (find by meaning). |
-| `kg_chat_threads` | List/filter chat threads (Teams / Google Chat) by system, channel/space, date, or participant. |
-| `kg_thread_activity` | A chat thread's message timeline + participants + the incidents discussed in it (the war-room view) + linked decisions (human-authored and chat-mined, each labeled) + any contradictions. |
-| `kg_chat_search` | Semantic search over ingested chat messages (find by meaning). |
+| `kg_chat_threads` | List/filter chat threads (Teams / Google Chat / Slack) by system, channel/space, date, or participant. |
+| `kg_thread_activity` | A chat thread's message timeline + participants + the incidents discussed in it (the war-room view) + linked decisions (human-authored and chat-mined, each labeled by source) + any contradictions. |
+| `kg_chat_search` | Semantic search over ingested chat messages (find by meaning), optionally restricted to one system (teams/google-chat/slack). |
 | `kg_meeting_search` | Semantic search over ingested meetings & action items (find by meaning). |
 | `kg_meeting_activity` | A meeting's attendees + action items (with the work items they are tracked as) + decisions mined from it (labeled by source/confidence) + the incidents discussed in it (the postmortem view) + any same-as counterpart meeting (a calendar event ↔ its Zoom session). |
 | `kg_action_items` | List/filter action items captured from meetings by assignee, meeting, source (provider/meeting-mined), or tracked-status (has/lacks a tracked-as work item). |
@@ -71,7 +71,7 @@ on). The `vcs` connector family adds three more **dynamically-registered** read 
 adds four more **dynamically-registered** read tools when enabled: `kg_deployments`, `kg_incidents`,
 `kg_incident_activity`, and `kg_cicd_search` (the last present only when ci-cd embedding is on). The
 `chat` connector family — the second **multi-connector** family (config block `connectors.chat` with
-nested `teams` and/or `googleChat` systems) — adds three more **dynamically-registered** read tools
+nested `teams`, `googleChat`, and/or `slack` systems) — adds three more **dynamically-registered** read tools
 when enabled: `kg_chat_threads`, `kg_thread_activity`, and `kg_chat_search` (the last is **always**
 registered with the family, but returns an empty result when chat embedding is off — the default).
 The `meetings` connector family — the third **multi-connector** family (config block
@@ -108,7 +108,7 @@ Connected Components ingestion is a planned follow-up. Decisions
 mined from meeting transcripts, email threads, wiki pages, **Figma comments, and Zeplin comments** also surface in the existing
 `kg_context_search`/`kg_find_precedents` (one unified decision surface, labeled by
 `source`/`confidence`; the positive `sourceSystem` filter now also accepts
-`zoom`/`google-calendar`/`gmail`/`outlook`/`confluence`/`figma`/`zeplin`). When the chat or email family is enabled
+`zoom`/`google-calendar`/`gmail`/`outlook`/`confluence`/`figma`/`slack`/`zeplin`). When the chat or email family is enabled
 alongside `agent-sessions`, `kg_actor_activity` additionally surfaces the actor's chat threads / email
 threads. The **User layer** (the operator's own profile/preferences/saved-queries — the most private,
 per-operator, opt-in, **never-egress** layer) is surfaced by the **always-registered** `kg_user_context`
