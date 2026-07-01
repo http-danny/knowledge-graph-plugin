@@ -5,7 +5,6 @@
     "name": "http-danny"
   },
   "license": "MIT",
-  "hooks": "./hooks/hooks.json",
   "mcpServers": {
     "kg": {
       "command": "node",
