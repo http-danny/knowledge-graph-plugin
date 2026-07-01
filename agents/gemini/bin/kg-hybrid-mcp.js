@@ -86182,6 +86182,36 @@ var ConfluenceConnectorSchema = external_exports.object({
 }).strict().refine((c) => c.spaces.length > 0 || c.cql !== void 0 || c.labels.length > 0, {
   message: "connectors.docs.confluence must be scoped: declare a non-empty `spaces` and/or a `cql` and/or non-empty `labels` (\xA715 \u2014 there is never an unscoped full-site fetch)"
 });
+var NotionConnectorSchema = external_exports.object({
+  enabled: external_exports.boolean(),
+  // Both modes are Bearer (Notion has no Basic-auth variant — INC1). `'token'` = an internal-
+  // integration `secret_…` token; `'oauth'` = a pre-minted OAuth2 access token (the OAuth2
+  // refresh-token flow is a documented follow-on, NOT in this slice — like Confluence OAuth).
+  auth: external_exports.enum(["token", "oauth"]).default("token"),
+  secret: DocsSecretSchema.optional(),
+  // { envVar | keychainRef } — names only, never a value (D12); default KG_NOTION_TOKEN
+  site: external_exports.string().min(1).optional(),
+  // workspace, informational (non-secret)
+  query: external_exports.string().min(1).optional(),
+  // POST /v1/search title substring (the default discovery axis)
+  rootPages: external_exports.array(external_exports.string().min(1)).default([]),
+  // explicit page ids whose subpage trees to crawl
+  databases: external_exports.array(external_exports.string().min(1)).default([]),
+  // opt-in database ids; each row IS a page
+  includeDatabases: external_exports.boolean().default(false),
+  // include the database nodes themselves (metadata-only otherwise)
+  since: external_exports.string().min(1).optional(),
+  // ISO date window (last_edited_time > …, client-side filter — §13.2)
+  maxPages: external_exports.number().int().positive().default(5e3),
+  // per-run cap (D19)
+  maxDepth: external_exports.number().int().positive().default(3),
+  // subpage crawl depth cap (§9/O2/R4)
+  includeComments: external_exports.boolean().default(false),
+  // fold GET /v1/comments into mineable/embeddable text (INC7/INC8)
+  // PER-SYSTEM notion mining (INC6 reads `notionConfig.mining`; confluence mining is FAMILY-
+  // level `docsConfig.mining` — the documented asymmetry, see the comment block above).
+  mining: external_exports.enum(["none", "local", "cloud"]).default("none")
+}).strict();
 var DocsConnectorSchema = external_exports.object({
   enabled: external_exports.boolean(),
   // Egress posture (D32, §9). 'none' (pages minted + structural, never embedded —
@@ -86189,21 +86219,30 @@ var DocsConnectorSchema = external_exports.object({
   // rendered page-body text only with a local embedder — a cloud embedder is REFUSED
   // at the top level), 'cloud' (explicit warned opt-in).
   embedding: external_exports.enum(["none", "local", "cloud"]).default("none"),
-  // LLM decision mining (§10.7). Sends rendered page text to the LLM, so opt-in:
-  // 'none' (no mining, no LLM call — the default), 'local' (mine only with a local
-  // LLM, no egress), 'cloud' (explicit warned opt-in).
+  // LLM decision mining (§10.7) — FAMILY-LEVEL for the confluence arm (the run path reads
+  // `deps.docsConfig?.mining` for confluence). The notion arm reads its PER-SYSTEM
+  // `deps.notionConfig?.mining` instead (see `NotionConnectorSchema.mining` above — the
+  // documented asymmetry). Sends rendered page text to the LLM, so opt-in: 'none' (no mining,
+  // no LLM call — the default), 'local' (mine only with a local LLM, no egress), 'cloud'
+  // (explicit warned opt-in).
   mining: external_exports.enum(["none", "local", "cloud"]).default("none"),
   confluence: ConfluenceConnectorSchema.optional(),
   // system 'confluence' (INC1)
-  // Opt-in metadata/behavior (default off, §9/§11.2/§11.3).
+  notion: NotionConnectorSchema.optional(),
+  // system 'notion' (INC7 — the SECOND docs system)
+  // Opt-in metadata/behavior (default off, §9/§11.2/§11.3). FAMILY-LEVEL for BOTH docs systems
+  // (the notion arm reads `deps.docsConfig?.linkReferences`; confluence reads `docsConfig.
+  // includeComments` via `toConfluenceOptions`). `includeComments` here governs CONFLUENCE
+  // page comments; the notion sub-block carries its OWN `includeComments` (the notion driver
+  // reads `cfg.includeComments` from `NotionOptions`).
   includeComments: external_exports.boolean().default(false),
   // fold page comments into mineable/embeddable text
   attachments: external_exports.boolean().default(false),
   // :WikiPage.attachmentMeta (metadata only, never content)
   linkReferences: external_exports.boolean().default(false)
   // cross-layer REFERENCES/ABOUT_DOC + key-match DISCUSSED_IN (§11.2/§11.3)
-}).strict().refine((c) => c.confluence !== void 0, {
-  message: "connectors.docs must declare at least one connector (`confluence`) (\xA715 \u2014 an enabled family with no connector fetches nothing)"
+}).strict().refine((c) => c.confluence !== void 0 || c.notion !== void 0, {
+  message: "connectors.docs must declare at least one connector (`confluence` and/or `notion`) (\xA715 \u2014 an enabled family with no connector fetches nothing)"
 });
 var DesignSecretSchema = external_exports.object({
   envVar: external_exports.string().min(1).optional(),
@@ -89110,9 +89149,9 @@ var DEFAULT_RESULT_LIMIT2 = 10;
 var DEFAULT_TOKEN_BUDGET2 = 2e3;
 var NO_CONTEXT_NOTE = "no context graph yet \u2014 run `kg ingest` to build the context layer";
 var CONTEXT_NODE_TYPES = ["Decision", "Rationale", "ContextEvent", "Outcome"];
-var CONNECTOR_SOURCE_SYSTEMS = ["teams", "google-chat", "slack", "zoom", "google-calendar", "gmail", "outlook", "confluence", "figma", "zeplin"];
+var CONNECTOR_SOURCE_SYSTEMS = ["teams", "google-chat", "slack", "zoom", "google-calendar", "gmail", "outlook", "confluence", "figma", "zeplin", "notion"];
 var CONNECTOR_SOURCE_SYSTEM_SET = new Set(CONNECTOR_SOURCE_SYSTEMS);
-var CONNECTOR_MINED_SOURCES = /* @__PURE__ */ new Set(["chat-mined", "meeting-mined", "email-mined", "confluence-mined", "figma-mined", "zeplin-mined"]);
+var CONNECTOR_MINED_SOURCES = /* @__PURE__ */ new Set(["chat-mined", "meeting-mined", "email-mined", "confluence-mined", "figma-mined", "zeplin-mined", "notion-mined"]);
 var kgContextSearchInputShape = {
   question: external_exports.string().min(1).describe("Natural-language search query over the Context layer."),
   scope: external_exports.object({
@@ -89124,7 +89163,7 @@ var kgContextSearchInputShape = {
     // S7 §14 / S8 §14 — the POSITIVE connector-mined selector (a PortableFilter `in` on
     // the EXISTING `sourceSystem` payload field). Selects ONLY connector-mined decisions
     // (markdown context points carry no `sourceSystem`). Default (omitted) returns both.
-    sourceSystems: external_exports.array(external_exports.enum(CONNECTOR_SOURCE_SYSTEMS)).optional().describe("Restrict to decisions mined from these connector systems (teams/google-chat/slack/zoom/google-calendar/gmail/outlook/confluence/figma/zeplin). Selects only connector-mined decisions; markdown decisions are excluded."),
+    sourceSystems: external_exports.array(external_exports.enum(CONNECTOR_SOURCE_SYSTEMS)).optional().describe("Restrict to decisions mined from these connector systems (teams/google-chat/slack/zoom/google-calendar/gmail/outlook/confluence/figma/zeplin/notion). Selects only connector-mined decisions; markdown decisions are excluded."),
     // S7 §14 / S8 §14 — human-authored-only is an APP-SIDE drop (the PortableFilter has
     // no `ne`): results whose `source` is connector-mined (`chat-mined`/`meeting-mined`)
     // or whose `sourceSystem` is a connector system are dropped after hydration. Mutually
@@ -93669,6 +93708,7 @@ var emailFamily = {
 
 // src/connectors/docs/ids.ts
 var CONFLUENCE_SYSTEM = "confluence";
+var NOTION_SYSTEM = "notion";
 
 // src/connectors/docs/tools.ts
 var MAX_PAGES = 500;
@@ -93786,7 +93826,7 @@ async function handleKgDocs(args, ctx) {
               p.spaceKey AS spaceKey, p.spaceName AS spaceName, p.contentType AS contentType,
               p.url AS url, p.version AS version, p.lastModifiedAt AS lastModifiedAt,
               p.parentExternalId AS parentExternalId, p.ancestors AS ancestors, p.labels AS labels,
-              authors
+              p.system AS system, authors
        ORDER BY p.lastModifiedAt DESC
        LIMIT ${limit2}`,
       params
@@ -93806,7 +93846,8 @@ async function handleKgDocs(args, ctx) {
     parentExternalId: strOrNull9(row["parentExternalId"]),
     ancestors: strArray2(row["ancestors"]),
     labels: strArray2(row["labels"]),
-    authors: arrayOfActors6(row["authors"])
+    authors: arrayOfActors6(row["authors"]),
+    system: strOrNull9(row["system"])
   }));
   return { pages };
 }
@@ -93841,7 +93882,8 @@ function toPageSummary(v) {
     lastModifiedAt: strOrNull9(o["lastModifiedAt"]),
     parentExternalId: strOrNull9(o["parentExternalId"]),
     ancestors: strArray2(o["ancestors"]),
-    labels: strArray2(o["labels"])
+    labels: strArray2(o["labels"]),
+    system: strOrNull9(o["system"])
   };
 }
 async function handleKgDocsActivity(args, ctx) {
@@ -93872,7 +93914,8 @@ async function handleKgDocsActivity(args, ctx) {
        RETURN { id: p.id, pageRef: p.pageRef, title: p.title, spaceKey: p.spaceKey,
                 spaceName: p.spaceName, contentType: p.contentType, url: p.url,
                 version: p.version, lastModifiedAt: p.lastModifiedAt,
-                parentExternalId: p.parentExternalId, ancestors: p.ancestors, labels: p.labels } AS page,
+                parentExternalId: p.parentExternalId, ancestors: p.ancestors, labels: p.labels,
+                system: p.system } AS page,
               authors
        LIMIT 1`,
       params1
@@ -94083,7 +94126,8 @@ async function handleKgDocsSearch(args, ctx) {
       snippet,
       lastModifiedAt: strOrNull9(node.props["lastModifiedAt"]),
       score: candidate.score,
-      properties: node.props
+      properties: node.props,
+      system: strOrNull9(node.props["system"])
     };
   });
   return { results };
@@ -94137,21 +94181,21 @@ function extractStatus13(err) {
 var TOOLS9 = [
   {
     name: "kg_docs",
-    description: "List/filter ingested wiki pages (Confluence) by space, label, content type (page/blogpost), author, parent (the property-based hierarchy: children/ancestors), and/or last-modified date range. Returns each page with its space, title, labels, hierarchy, url, version, and authors. Scoped to wiki pages (local markdown documents do not appear). Corpus-scoped and read-only.",
+    description: "List/filter ingested wiki pages (Confluence / Notion) by space, label, content type (page/blogpost), author, parent (the property-based hierarchy: children/ancestors), and/or last-modified date range. Returns each page with its space, title, labels, hierarchy, url, version, authors, and system (confluence or notion). Scoped to wiki pages (local markdown documents do not appear). Corpus-scoped and read-only.",
     inputShape: kgDocsInputShape,
     handler: handleKgDocs,
     profile: "safe"
   },
   {
     name: "kg_docs_activity",
-    description: "For one wiki page (by id, or pageRef): its metadata, the authors/editors, the decisions linked to it (human-authored and wiki-mined, each labeled by source), the cross-layer code symbols it references and local docs it is about, the work items / pull requests / incidents discussed in it (the SDLC trace), and any contradictions. The full page trace in one tool. Corpus-scoped and read-only.",
+    description: "For one wiki page (by id, or pageRef): its metadata (including system: confluence or notion), the authors/editors, the decisions linked to it (human-authored and wiki-mined, each labeled by source), the cross-layer code symbols it references and local docs it is about, the work items / pull requests / incidents discussed in it (the SDLC trace), and any contradictions. The full page trace in one tool. Corpus-scoped and read-only.",
     inputShape: kgDocsActivityInputShape,
     handler: handleKgDocsActivity,
     profile: "safe"
   },
   {
     name: "kg_docs_search",
-    description: "Semantic search over ingested wiki pages (find by meaning), optionally restricted to one space or label. Returns matching pages with their title, space, url, and snippet. Corpus-scoped and read-only. When docs embedding is off (embedding:`none`, the default) it returns an empty result \u2014 list/filter pages structurally via kg_docs instead.",
+    description: "Semantic search over ingested wiki pages (Confluence / Notion \u2014 find by meaning), optionally restricted to one space or label. Returns matching pages with their title, space, url, snippet, and system (confluence or notion). Corpus-scoped and read-only. When docs embedding is off (embedding:`none`, the default) it returns an empty result \u2014 list/filter pages structurally via kg_docs instead.",
     inputShape: kgDocsSearchInputShape,
     handler: handleKgDocsSearch,
     profile: "safe"
@@ -94174,8 +94218,29 @@ function confluenceStubConnector() {
     }
   };
 }
-function resolveDocs(_cfg, _secrets) {
-  return confluenceStubConnector();
+function notionStubConnector() {
+  const message = `docs '${NOTION_SYSTEM}' connector fetch/map is wired in the run path \u2014 the Notion REST driver+fetch are a later INC, the structural map is a later INC`;
+  return {
+    system: NOTION_SYSTEM,
+    fetch(_since) {
+      throw new Error(message);
+    },
+    map(_record, _ctx) {
+      throw new Error(message);
+    }
+  };
+}
+function resolveDocs(cfg, _secrets) {
+  switch (cfg.system) {
+    case void 0:
+    case CONFLUENCE_SYSTEM:
+      return confluenceStubConnector();
+    // backward-compat: unset → confluence (§18.9 guard)
+    case NOTION_SYSTEM:
+      return notionStubConnector();
+    default:
+      throw new AdapterNotWiredError("connector-system", cfg.system);
+  }
 }
 var docsFamily = {
   family: "docs",

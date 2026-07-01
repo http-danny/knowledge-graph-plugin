@@ -48,9 +48,9 @@ they return structured, provenance-linked retrieval instead of raw text scans.
 | `kg_email_threads` | List/filter email threads (Gmail / Outlook) by system, label/folder, date, or participant. |
 | `kg_email_activity` | An email thread's message timeline + participants + linked decisions (human-authored and email-mined, each labeled) + action items (with the work items they are tracked as) + the work items / pull requests / incidents discussed in it (the SDLC trace) + any contradictions. |
 | `kg_email_search` | Semantic search over ingested email messages (find by meaning). |
-| `kg_docs` | List/filter wiki pages (Confluence) by space, label, content type, author, parent (the page hierarchy), or last-modified range. |
-| `kg_docs_activity` | A wiki page's metadata + authors/editors + linked decisions (human-authored and wiki-mined, each labeled) + the code symbols it references and local docs it is about + the work items / pull requests / incidents discussed in it (the SDLC trace) + any contradictions. |
-| `kg_docs_search` | Semantic search over ingested wiki pages (find by meaning), optionally restricted to one space or label. |
+| `kg_docs` | List/filter ingested wiki pages (Confluence / Notion) by space, label, content type (page/blogpost), author, parent (the property-based hierarchy: children/ancestors), and/or last-modified date range. Returns each page with its space, title, labels, hierarchy, url, version, authors, and system (confluence or notion). Scoped to wiki pages (local markdown documents do not appear). |
+| `kg_docs_activity` | For one wiki page (by id, or pageRef): its metadata (including system: confluence or notion), the authors/editors, the decisions linked to it (human-authored and wiki-mined, each labeled by source), the cross-layer code symbols it references and local docs it is about, the work items / pull requests / incidents discussed in it (the SDLC trace), and any contradictions. The full page trace in one tool. |
+| `kg_docs_search` | Semantic search over ingested wiki pages (Confluence / Notion — find by meaning), optionally restricted to one space or label. Returns matching pages with their title, space, url, snippet, and system (confluence or notion). When docs embedding is off (embedding:`none`, the default) it returns an empty result — list/filter pages structurally via kg_docs instead. |
 | `kg_design` | List/filter design files & mockups (Figma and Zeplin) by project, team, file, kind (frame/screen/component/componentSet), author, parent file (the file↔mockup hierarchy), system (figma/zeplin), or last-modified range. |
 | `kg_design_activity` | A design file/mockup's metadata + owner/editors + linked decisions (human-authored and design-mined, each labeled by source) + the code symbols a mockup is about (the ABOUT_CODE design→code surface — Figma only; Zeplin mockups do not yet carry ABOUT_CODE links) + the work items / pull requests discussed in it (the SDLC trace) + any contradictions. |
 | `kg_design_search` | Semantic search over ingested design files & mockups (Figma and Zeplin — find by meaning), optionally restricted to one file, kind, or project. |
@@ -83,8 +83,8 @@ result when meeting embedding is off — the default). The `email` connector fam
 systems) — adds three more **dynamically-registered** read tools when enabled: `kg_email_threads`,
 `kg_email_activity`, and `kg_email_search` (`kg_email_search` is **always** registered with the family,
 but returns an empty result when email embedding is off — the default). The `docs` connector family —
-the FIRST **single-connector** family in this batch (config block `connectors.docs` with a nested
-`confluence` system) — adds three more **dynamically-registered** read tools when enabled: `kg_docs`,
+a **multi-connector** family (config block `connectors.docs` with nested `confluence` and `notion`
+systems) — adds three more **dynamically-registered** read tools when enabled: `kg_docs`,
 `kg_docs_activity`, and `kg_docs_search` (`kg_docs_search` is **always** registered with the family, but
 returns an empty result when docs embedding is off — the default; list/filter pages structurally via
 `kg_docs` instead). Wiki pages are `:Document:WikiPage` nodes (the file-owned `:Document` core reused for
@@ -108,7 +108,7 @@ Connected Components ingestion is a planned follow-up. Decisions
 mined from meeting transcripts, email threads, wiki pages, **Figma comments, and Zeplin comments** also surface in the existing
 `kg_context_search`/`kg_find_precedents` (one unified decision surface, labeled by
 `source`/`confidence`; the positive `sourceSystem` filter now also accepts
-`zoom`/`google-calendar`/`gmail`/`outlook`/`confluence`/`figma`/`slack`/`zeplin`). When the chat or email family is enabled
+`zoom`/`google-calendar`/`gmail`/`outlook`/`confluence`/`notion`/`figma`/`slack`/`zeplin`). When the chat or email family is enabled
 alongside `agent-sessions`, `kg_actor_activity` additionally surfaces the actor's chat threads / email
 threads. The **User layer** (the operator's own profile/preferences/saved-queries — the most private,
 per-operator, opt-in, **never-egress** layer) is surfaced by the **always-registered** `kg_user_context`
